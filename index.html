@@ -479,22 +479,6 @@
     </div>
   </div>
 
-  <!-- GAP TO PB + CONSISTENCY -->
-  <div class="section two-col">
-    <div>
-      <div class="section-title">Gap to PB per Race</div>
-      <div class="chart-card">
-        <div style="position:relative;height:280px"><canvas id="gapChart"></canvas></div>
-      </div>
-    </div>
-    <div>
-      <div class="section-title">Consistency Score per Year <span style="font-weight:400;color:var(--muted);font-size:0.8rem">— lower = more consistent</span></div>
-      <div class="chart-card">
-        <div style="position:relative;height:280px"><canvas id="consistencyChart"></canvas></div>
-      </div>
-    </div>
-  </div>
-
   <!-- COUNTRY + YEAR -->
   <div class="section two-col">
     <div>
@@ -522,14 +506,6 @@
     </div>
   </div>
 
-  <!-- TOTAL TIME BY CONTINENT -->
-  <div class="section">
-    <div class="section-title">Total Racing Time by Continent</div>
-    <div class="chart-card">
-      <div style="position:relative;height:220px"><canvas id="contTimeChart"></canvas></div>
-    </div>
-  </div>
-
   <!-- LATITUDE CHARTS -->
   <div class="section two-col">
     <div>
@@ -542,22 +518,6 @@
       <div class="section-title">Latitude vs Finish Time</div>
       <div class="chart-card">
         <div style="position:relative;height:340px"><canvas id="latTimeChart2"></canvas></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- LONGITUDE + DISTANCE -->
-  <div class="section two-col">
-    <div>
-      <div class="section-title">Race Longitude over Time</div>
-      <div class="chart-card">
-        <div style="position:relative;height:320px"><canvas id="lngChart"></canvas></div>
-      </div>
-    </div>
-    <div>
-      <div class="section-title">Distance from Home — unique cities</div>
-      <div class="chart-card">
-        <div style="position:relative;height:320px"><canvas id="distanceChart"></canvas></div>
       </div>
     </div>
   </div>
@@ -630,6 +590,30 @@
       <div class="chart-card">
         <div style="position:relative;height:380px"><canvas id="avgYearChart"></canvas></div>
       </div>
+    </div>
+  </div>
+
+  <!-- CONSISTENCY + LONGITUDE -->
+  <div class="section two-col">
+    <div>
+      <div class="section-title">Consistency Score per Year <span style="font-weight:400;color:var(--muted);font-size:0.8rem">— lower = more consistent</span></div>
+      <div class="chart-card">
+        <div style="position:relative;height:280px"><canvas id="consistencyChart"></canvas></div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Race Longitude over Time</div>
+      <div class="chart-card">
+        <div style="position:relative;height:280px"><canvas id="lngChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DISTANCE FROM HOME -->
+  <div class="section">
+    <div class="section-title">Distance from Home — unique cities</div>
+    <div class="chart-card">
+      <div style="position:relative;height:1100px"><canvas id="distanceChart"></canvas></div>
     </div>
   </div>
 
@@ -2225,43 +2209,6 @@ function openHeatmapModal(year, countryCode) {
   });
 })();
 
-/* ═══════════════════════════════════════════════════════
-   GAP TO PB
-═══════════════════════════════════════════════════════ */
-(function(){
-  const PB = 172;
-  const gaps = races.map(r => r.minutes - PB);
-  const bg = gaps.map(g => g<=5?'#fbbf24bb':g<=15?'#22c55ebb':g<=30?'#3b82f6bb':'#6b728099');
-  const bd = gaps.map(g => g<=5?'#fbbf24':g<=15?'#22c55e':g<=30?'#3b82f6':'#6b7280');
-
-  const ctx = document.getElementById('gapChart').getContext('2d');
-  new Chart(ctx,{
-    type:'bar',
-    data:{ labels:races.map(r=>`${r.name} ${r.year}`),
-      datasets:[{ data:gaps, backgroundColor:bg, borderColor:bd, borderWidth:1.5, borderRadius:4 }]},
-    options:{ responsive:true, maintainAspectRatio:false,
-      onClick(e,els){ if(els.length) openModal(races[els[0].index]); },
-      plugins:{ legend:{display:false},
-        tooltip:{ backgroundColor:'#1f2937',borderColor:'#374151',borderWidth:1,padding:12,
-          callbacks:{ title:items=>`${races[items[0].dataIndex].name} ${races[items[0].dataIndex].year}`,
-            label:i=>[` +${i.raw} min behind PB`,` Finish: ${races[i.dataIndex].time}`] }},
-        annotation:{ annotations:{ pb:{type:'line',yMin:0,yMax:0,borderColor:'#fbbf24',borderWidth:2,
-          label:{content:'PB — Berlin 2:52',display:true,position:'end',backgroundColor:'rgba(251,191,36,0.12)',
-            color:'#fbbf24',font:{size:10}}}}}},
-      scales:{ x:{ticks:{display:false},grid:{color:'rgba(255,255,255,0.03)'}},
-        y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8b949e',callback:v=>`+${v}m`},min:0}}}
-  });
-
-  const leg = document.createElement('div');
-  leg.style.cssText='display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;font-size:0.78rem;color:var(--muted)';
-  leg.innerHTML=`
-    <span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:2px;background:#fbbf24;display:inline-block"></span>≤ 5 min</span>
-    <span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:2px;background:#22c55e;display:inline-block"></span>≤ 15 min</span>
-    <span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:2px;background:#3b82f6;display:inline-block"></span>≤ 30 min</span>
-    <span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:2px;background:#6b7280;display:inline-block"></span>> 30 min</span>`;
-  const wrap = document.getElementById('gapChart').parentElement;
-  wrap.insertBefore(leg, wrap.firstChild);
-})();
 
 /* ═══════════════════════════════════════════════════════
    CONSISTENCY SCORE (std dev per year)
@@ -2361,36 +2308,6 @@ function openHeatmapModal(year, countryCode) {
   document.getElementById('majorsTimeline').innerHTML=html;
 })();
 
-/* ═══════════════════════════════════════════════════════
-   TOTAL TIME BY CONTINENT
-═══════════════════════════════════════════════════════ */
-(function(){
-  const cMap={TUR:'Asia',JAP:'Asia',USA:'North America',
-    GER:'Europe',NOR:'Europe',NED:'Europe',DEN:'Europe',UK:'Europe',
-    SER:'Europe',FRA:'Europe',GRE:'Europe',SWISS:'Europe',SPA:'Europe',
-    SWE:'Europe',CZE:'Europe',ITA:'Europe',POL:'Europe',ICE:'Europe',MLA:'Europe'};
-  const totals={},counts={};
-  races.forEach(r=>{const c=cMap[r.country]||'Other'; totals[c]=(totals[c]||0)+r.minutes; counts[c]=(counts[c]||0)+1;});
-  const order=['Europe','Asia','North America'];
-  const labels=order.filter(c=>totals[c]);
-  const hours=labels.map(c=>parseFloat((totals[c]/60).toFixed(1)));
-  const colors={Europe:'#3b82f6',Asia:'#f97316','North America':'#22c55e'};
-
-  const ctx=document.getElementById('contTimeChart').getContext('2d');
-  new Chart(ctx,{
-    type:'bar',
-    data:{labels,datasets:[{data:hours,
-      backgroundColor:labels.map(l=>colors[l]+'bb'),borderColor:labels.map(l=>colors[l]),
-      borderWidth:1.5,borderRadius:10}]},
-    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},
-        tooltip:{backgroundColor:'#1f2937',borderColor:'#374151',borderWidth:1,padding:12,
-          callbacks:{label:i=>{const c=labels[i.dataIndex],h=Math.floor(totals[c]/60),m=totals[c]%60;
-            return[` ${h}h ${m}m total racing time`,` ${counts[c]} races`,` avg ${fmtTime(Math.round(totals[c]/counts[c]))} per race`];}}}},
-      scales:{x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8b949e',callback:v=>`${v}h`}},
-        y:{grid:{display:false},ticks:{color:'#e6edf3',font:{size:13}}}}}
-  });
-})();
 
 /* ═══════════════════════════════════════════════════════
    LONGITUDE CHART
