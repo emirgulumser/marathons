@@ -547,14 +547,6 @@
     </div>
   </div>
 
-  <!-- MULTI-VISIT CITIES -->
-  <div class="section">
-    <div class="section-title">Multi-Visit Cities — performance across return trips</div>
-    <div class="chart-card">
-      <div style="position:relative;height:320px"><canvas id="multiCityChart"></canvas></div>
-    </div>
-  </div>
-
   <!-- MAJORS TIMELINE -->
   <div class="section">
     <div class="section-title">World Majors Completion Timeline</div>
@@ -611,7 +603,7 @@
 
   <!-- DISTANCE FROM HOME -->
   <div class="section">
-    <div class="section-title">Distance from Home — unique cities</div>
+    <div class="section-title">Latitude Distance from Home — unique cities</div>
     <div class="chart-card">
       <div style="position:relative;height:1100px"><canvas id="distanceChart"></canvas></div>
     </div>
@@ -2241,42 +2233,6 @@ function openHeatmapModal(year, countryCode) {
   });
 })();
 
-/* ═══════════════════════════════════════════════════════
-   MULTI-VISIT CITIES
-═══════════════════════════════════════════════════════ */
-(function(){
-  const cityMap={};
-  races.forEach(r=>{ if(!cityMap[r.name]) cityMap[r.name]=[]; cityMap[r.name].push(r); });
-  const multi=Object.entries(cityMap).filter(([,rs])=>rs.length>1).sort((a,b)=>b[1].length-a[1].length);
-  const palette=['#f97316','#fbbf24','#22c55e','#3b82f6','#a78bfa','#ec4899','#06b6d4','#84cc16','#f43f5e','#fb923c'];
-
-  const datasets=multi.map(([city,rs],i)=>({
-    label:city,
-    data:rs.map((r,vi)=>({x:vi+1,y:r.minutes,race:r})),
-    borderColor:palette[i%palette.length],
-    backgroundColor:palette[i%palette.length]+'33',
-    pointBackgroundColor:palette[i%palette.length],
-    pointRadius:7, pointHoverRadius:10, borderWidth:2, tension:0.3, fill:false,
-  }));
-
-  const ctx=document.getElementById('multiCityChart').getContext('2d');
-  new Chart(ctx,{
-    type:'line', data:{datasets},
-    options:{ responsive:true, maintainAspectRatio:false,
-      interaction:{mode:'nearest',intersect:true},
-      onClick(e,els){ if(els.length){ openModal(datasets[els[0].datasetIndex].data[els[0].index].race); }},
-      plugins:{ legend:{display:true,position:'bottom',labels:{color:'#8b949e',boxWidth:12,font:{size:11},padding:14}},
-        tooltip:{ backgroundColor:'#1f2937',borderColor:'#374151',borderWidth:1,padding:12,
-          callbacks:{
-            title:items=>{const d=datasets[items[0].datasetIndex].data[items[0].index]; return `${d.race.name} ${d.race.year}`;},
-            label:item=>`Visit #${item.raw.x}  ·  ${fmtTime(item.raw.y)}`}}},
-      scales:{ x:{type:'linear',title:{display:true,text:'Visit #',color:'#8b949e',font:{size:11}},
-          grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#8b949e',stepSize:1},
-          min:0.5,max:Math.max(...multi.map(([,rs])=>rs.length))+0.5},
-        y:{title:{display:true,text:'Finish Time',color:'#8b949e',font:{size:11}},
-          grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8b949e',callback:v=>fmtTime(v)},min:160,max:260}}}
-  });
-})();
 
 /* ═══════════════════════════════════════════════════════
    MAJORS TIMELINE
@@ -2357,39 +2313,37 @@ function openHeatmapModal(year, countryCode) {
 })();
 
 /* ═══════════════════════════════════════════════════════
-   DISTANCE FROM ANKARA
+   LATITUDE DISTANCE FROM HOME
 ═══════════════════════════════════════════════════════ */
 (function(){
-  function haversine(la1,lo1,la2,lo2){
-    const R=6371,f1=la1*Math.PI/180,f2=la2*Math.PI/180,
-      df=(la2-la1)*Math.PI/180,dl=(lo2-lo1)*Math.PI/180;
-    const a=Math.sin(df/2)**2+Math.cos(f1)*Math.cos(f2)*Math.sin(dl/2)**2;
-    return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)));
-  }
-  const AK=[39.9333,32.8597];
+  const HOME_LAT = 39.9333;
   const seen=new Set(), cities=[];
   races.forEach(r=>{
     if(!seen.has(r.name)){ seen.add(r.name);
-      cities.push({name:r.name,dist:haversine(AK[0],AK[1],r.lat,r.lng),country:r.country}); }
+      const diff = parseFloat((r.lat - HOME_LAT).toFixed(2));
+      cities.push({name:r.name, diff, lat:r.lat, country:r.country}); }
   });
-  cities.sort((a,b)=>b.dist-a.dist);
-
-  const cMap3={TUR:'Asia',JAP:'Asia',USA:'North America'};
-  const cc3={Asia:'#f97316','North America':'#22c55e',Europe:'#3b82f6'};
+  cities.sort((a,b) => b.diff - a.diff);
 
   const ctx=document.getElementById('distanceChart').getContext('2d');
   new Chart(ctx,{
     type:'bar',
     data:{labels:cities.map(c=>`${countryMap[c.country]?.flag||''} ${c.name}`),
-      datasets:[{data:cities.map(c=>c.dist),
-        backgroundColor:cities.map(c=>(cc3[cMap3[c.country]||'Europe'])+'99'),
-        borderColor:cities.map(c=>cc3[cMap3[c.country]||'Europe']),
+      datasets:[{data:cities.map(c=>c.diff),
+        backgroundColor:cities.map(c=>c.diff>=0?'#3b82f699':'#f9731699'),
+        borderColor:cities.map(c=>c.diff>=0?'#3b82f6':'#f97316'),
         borderWidth:1.5,borderRadius:4}]},
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},
         tooltip:{backgroundColor:'#1f2937',borderColor:'#374151',borderWidth:1,padding:12,
-          callbacks:{label:i=>`${i.raw.toLocaleString()} km from Home`}}},
-      scales:{x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8b949e',callback:v=>`${(v/1000).toFixed(0)}k km`}},
+          callbacks:{label:i=>{
+            const c=cities[i.dataIndex];
+            const dir=c.diff>=0?'N of home':'S of home';
+            return[` ${c.lat}°N  (${c.diff>=0?'+':''}${c.diff}°)`,` ${dir}`];
+          }}}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8b949e',callback:v=>`${v>=0?'+':''}${v}°`},
+          title:{display:true,text:'Latitude difference from Ankara (39.93°N)',color:'#8b949e',font:{size:11}}},
         y:{grid:{display:false},ticks:{color:'#e6edf3',font:{size:10}}}}}
   });
 })();
