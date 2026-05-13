@@ -470,6 +470,22 @@
     </div>
   </div>
 
+  <!-- LATITUDE CHARTS -->
+  <div class="section two-col">
+    <div>
+      <div class="section-title">Race Latitude over Time</div>
+      <div class="chart-card">
+        <div style="position:relative;height:340px"><canvas id="latTimeChart"></canvas></div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Latitude vs Finish Time</div>
+      <div class="chart-card">
+        <div style="position:relative;height:340px"><canvas id="latTimeChart2"></canvas></div>
+      </div>
+    </div>
+  </div>
+
   <!-- WORLD MAP -->
   <div class="section">
     <div class="section-title">Interactive World Map</div>
@@ -1226,8 +1242,9 @@ let activeCountryFilter = null;
       const v = matrix[`${y}-${c.code}`]||0;
       const alpha = v===0?0:0.18+(v/maxVal)*0.75;
       const cls = v===0?'heat-cell empty':'heat-cell';
-      const style = v>0?`background:rgba(249,115,22,${alpha.toFixed(2)})`:'';
-      html+=`<td class="${cls}" style="${style}" title="${c.name} ${y}: ${v||'no'} race${v!==1?'s':''}">${v||''}</td>`;
+      const style = v>0?`background:rgba(249,115,22,${alpha.toFixed(2)});cursor:pointer`:'';
+      const click = v>0?`onclick="openHeatmapModal(${y},'${c.code}')"`:'' ;
+      html+=`<td class="${cls}" style="${style}" title="${c.name} ${y}: ${v||'no'} race${v!==1?'s':''}" ${click}>${v||''}</td>`;
     });
     html+='</tr>';
   });
@@ -1389,6 +1406,59 @@ function closeModal(e){
 }
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
 
+function openHeatmapModal(year, countryCode) {
+  const c = countryMap[countryCode] || { flag:'', name:countryCode };
+  const list = races
+    .filter(r => r.year === year && r.country === countryCode)
+    .sort((a,b) => a.minutes - b.minutes);
+  if (!list.length) return;
+
+  const avgMin = Math.round(list.reduce((s,r) => s+r.minutes, 0) / list.length);
+
+  let rows = list.map(r => `
+    <div onclick="closeModal();setTimeout(()=>openModal(races[${r.idx-1}]),120)"
+         style="background:var(--card2);border:1px solid var(--border);border-radius:10px;
+                padding:13px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;
+                transition:border-color 0.15s"
+         onmouseover="this.style.borderColor='#f97316'"
+         onmouseout="this.style.borderColor='var(--border)'">
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:0.95rem">${r.name}${r.major?` <span class="major-badge">⭐</span>`:''}</div>
+        <div style="font-size:0.75rem;color:var(--muted);margin-top:3px">#${r.rank} fastest overall · click for full detail</div>
+      </div>
+      <div style="font-size:1.25rem;font-weight:800;color:${timeColor(r.minutes)};font-variant-numeric:tabular-nums">${r.time}</div>
+    </div>`).join('');
+
+  let summary = list.length > 1 ? `
+    <div class="modal-grid" style="margin-top:16px">
+      <div class="modal-stat-box">
+        <div class="modal-stat-label">Best</div>
+        <div class="modal-stat-val" style="color:#22c55e">${list[0].time}</div>
+      </div>
+      <div class="modal-stat-box">
+        <div class="modal-stat-label">Average</div>
+        <div class="modal-stat-val">${fmtTime(avgMin)}</div>
+      </div>
+      <div class="modal-stat-box">
+        <div class="modal-stat-label">Slowest</div>
+        <div class="modal-stat-val" style="color:var(--muted)">${list[list.length-1].time}</div>
+      </div>
+      <div class="modal-stat-box">
+        <div class="modal-stat-label">Races</div>
+        <div class="modal-stat-val">${list.length}</div>
+      </div>
+    </div>` : '';
+
+  document.getElementById('modalContent').innerHTML = `
+    <div class="modal-flag">${c.flag}</div>
+    <div class="modal-title">${c.name}</div>
+    <div class="modal-subtitle">${year} · ${list.length} race${list.length>1?'s':''}</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">${rows}</div>
+    ${summary}`;
+
+  document.getElementById('modal').classList.add('open');
+}
+
 /* ═══════════════════════════════════════════════════════
    ANNUAL TRAINING LOG
 ═══════════════════════════════════════════════════════ */
@@ -1523,6 +1593,204 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
           ticks:{ color:'#8b949e', callback: v=>`${(v/1000).toFixed(0)}k km` } }
       }
     }
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════
+   LATITUDE CHARTS
+═══════════════════════════════════════════════════════ */
+(function() {
+  // City-level latitudes, same order as races[]
+  const lats = [
+    41.0, // Istanbul 2016
+    36.9, // Antalya 2017
+    48.9, // Paris 2017
+    36.9, // Antalya 2018
+    42.4, // Boston 2018
+    52.5, // Berlin 2018
+    36.8, // Mersin 2018
+    36.9, // Antalya 2019
+    41.9, // Roma 2019
+    59.3, // Stockholm 2019
+    41.9, // Chicago 2019
+    40.7, // New York 2019
+    36.9, // Antalya 2020
+    41.0, // Istanbul 2021
+    36.9, // Antalya 2022
+    38.4, // Izmir 2022
+    53.6, // Hamburg 2022
+    50.1, // Prague 2022
+    69.7, // Midnight Sun 2022 — Tromsø
+    57.0, // Aalborg 2022
+    63.4, // Trondheim 2022
+    50.9, // Köln 2022
+    52.4, // Amsterdam 2022
+    47.1, // Lucerne 2022
+    41.0, // Istanbul 2022
+    39.5, // Valencia 2022
+    35.7, // Tokyo 2023
+    52.2, // Enschede 2023
+    40.6, // Thessaloniki 2023
+    38.4, // Izmir 2023
+    55.7, // Copenhagen 2023
+    78.2, // Spitsbergen 2023
+    51.9, // Münster 2023
+    52.2, // Warsaw 2023
+    48.1, // Munich 2023
+    41.0, // Istanbul 2023
+    36.9, // Antalya 2024
+    50.8, // Brighton 2024
+    53.5, // Manchester 2024
+    51.5, // London 2024
+    44.8, // Belgrade 2024
+    69.7, // Midnight Sun 2024 — Tromsø
+    64.1, // Reykjavik 2024
+    48.1, // Colmar 2024
+    50.9, // Köln 2024
+    50.1, // Frankfurt 2024
+    37.9, // Athens 2024
+    69.7, // Polar Night 2025 — Tromsø
+    44.8, // Belgrade 2025
+    51.9, // Rotterdam 2025
+    42.8, // Chitose 2025
+    55.4, // Odense 2025
+    48.1, // Munich 2025
+    52.4, // Amsterdam 2025
+    47.1, // Lucerne 2025
+    39.5, // Valencia 2025
+    35.9, // Valletta 2026
+    44.8, // Belgrade 2026
+    60.4, // Bergen 2026
+    55.7, // Copenhagen 2026
+  ];
+
+  races.forEach((r, i) => { r.lat = lats[i]; });
+
+  const continentMap = {
+    TUR:'Asia', JAP:'Asia', USA:'North America',
+    GER:'Europe', NOR:'Europe', NED:'Europe', DEN:'Europe', UK:'Europe',
+    SER:'Europe', FRA:'Europe', GRE:'Europe', SWISS:'Europe', SPA:'Europe',
+    SWE:'Europe', CZE:'Europe', ITA:'Europe', POL:'Europe', ICE:'Europe', MLA:'Europe',
+  };
+  const contColor = { Europe:'#3b82f6', Asia:'#f97316', 'North America':'#22c55e' };
+  const ptColor = r => contColor[continentMap[r.country]] || '#8b949e';
+
+  // Latitude bands for annotation
+  const bands = [
+    { y: 78.2, label: '↑ Spitsbergen',  color: 'rgba(168,85,247,0.5)' },
+    { y: 66.5, label: 'Arctic Circle',   color: 'rgba(99,102,241,0.4)' },
+    { y: 55.0, label: 'Northern Europe', color: 'rgba(59,130,246,0.2)' },
+    { y: 45.0, label: 'Central Europe',  color: 'rgba(34,197,94,0.15)' },
+    { y: 35.0, label: 'Mediterranean',   color: 'rgba(249,115,22,0.15)' },
+  ];
+
+  // ── Chart 1: latitude over time ──────────────────────
+  const ctx1 = document.getElementById('latTimeChart').getContext('2d');
+  new Chart(ctx1, {
+    type: 'scatter',
+    data: { datasets: [{
+      data: races.map((r,i) => ({ x: i+1, y: r.lat })),
+      backgroundColor: races.map(r => ptColor(r) + 'cc'),
+      borderColor:     races.map(r => ptColor(r)),
+      pointRadius:     races.map(r => r.major ? 8 : 5),
+      pointStyle:      races.map(r => r.major ? 'star' : 'circle'),
+      pointHoverRadius: 9,
+    }]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      onClick(e, els){ if(els.length) openModal(races[els[0].index]); },
+      interaction: { mode:'nearest', intersect:true },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          callbacks: {
+            title: items => {
+              const r = races[items[0].dataIndex];
+              return `${r.name} ${r.year}`;
+            },
+            label: item => [
+              ` ${item.raw.y.toFixed(1)}°N`,
+              ` Finish: ${races[item.dataIndex].time}`,
+            ]
+          }
+        },
+        annotation: { annotations: {
+          arctic: { type:'line', yMin:66.5, yMax:66.5, borderColor:'rgba(99,102,241,0.5)', borderWidth:1, borderDash:[4,4],
+            label:{ content:'Arctic Circle 66.5°N', display:true, position:'start', backgroundColor:'transparent', color:'#818cf8', font:{size:10} }},
+          med:    { type:'line', yMin:45.0, yMax:45.0, borderColor:'rgba(34,197,94,0.3)',  borderWidth:1, borderDash:[4,4],
+            label:{ content:'45°N', display:true, position:'start', backgroundColor:'transparent', color:'#86efac', font:{size:10} }},
+        }}
+      },
+      scales: {
+        x: { title:{ display:true, text:'Race #', color:'#8b949e', font:{size:11} },
+             grid:{ color:'rgba(255,255,255,0.04)' }, ticks:{ color:'#8b949e' }, min:0, max:62 },
+        y: { title:{ display:true, text:'Latitude °N', color:'#8b949e', font:{size:11} },
+             grid:{ color:'rgba(255,255,255,0.05)' }, ticks:{ color:'#8b949e', callback: v=>`${v}°N` },
+             min:30, max:82 }
+      }
+    }
+  });
+
+  // ── Chart 2: latitude vs finish time ─────────────────
+  const ctx2 = document.getElementById('latTimeChart2').getContext('2d');
+  new Chart(ctx2, {
+    type: 'scatter',
+    data: { datasets: [{
+      data: races.map(r => ({ x: r.minutes, y: r.lat })),
+      backgroundColor: races.map(r => ptColor(r) + 'cc'),
+      borderColor:     races.map(r => ptColor(r)),
+      pointRadius:     races.map(r => r.major ? 8 : 5),
+      pointStyle:      races.map(r => r.major ? 'star' : 'circle'),
+      pointHoverRadius: 9,
+    }]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      onClick(e, els){ if(els.length) openModal(races[els[0].index]); },
+      interaction: { mode:'nearest', intersect:true },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          callbacks: {
+            title: items => {
+              const r = races[items[0].dataIndex];
+              return `${r.name} ${r.year}`;
+            },
+            label: item => [
+              ` ${item.raw.y.toFixed(1)}°N`,
+              ` Finish: ${races[item.dataIndex].time}`,
+            ]
+          }
+        },
+        annotation: { annotations: {
+          arctic: { type:'line', yMin:66.5, yMax:66.5, borderColor:'rgba(99,102,241,0.5)', borderWidth:1, borderDash:[4,4],
+            label:{ content:'Arctic Circle', display:true, position:'end', backgroundColor:'transparent', color:'#818cf8', font:{size:10} }},
+          sub3:   { type:'line', xMin:180, xMax:180, borderColor:'rgba(34,197,94,0.4)', borderWidth:1, borderDash:[4,4],
+            label:{ content:'3:00', display:true, position:'start', backgroundColor:'transparent', color:'#86efac', font:{size:10} }},
+        }}
+      },
+      scales: {
+        x: { title:{ display:true, text:'Finish Time', color:'#8b949e', font:{size:11} },
+             grid:{ color:'rgba(255,255,255,0.04)' },
+             ticks:{ color:'#8b949e', callback: v => fmtTime(v) }, min:155, max:270 },
+        y: { title:{ display:true, text:'Latitude °N', color:'#8b949e', font:{size:11} },
+             grid:{ color:'rgba(255,255,255,0.05)' }, ticks:{ color:'#8b949e', callback: v=>`${v}°N` },
+             min:30, max:82 }
+      }
+    }
+  });
+
+  // Colour legend
+  [ctx1, ctx2].forEach((_, ci) => {
+    const id = ci === 0 ? 'latTimeChart' : 'latTimeChart2';
+    const wrap = document.getElementById(id).parentElement;
+    const leg = document.createElement('div');
+    leg.style.cssText = 'display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;font-size:0.78rem;color:var(--muted)';
+    leg.innerHTML = Object.entries(contColor).map(([k,v]) =>
+      `<span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:${v};display:inline-block"></span>${k}</span>`
+    ).join('') + `<span style="display:flex;align-items:center;gap:5px"><span style="font-size:0.9rem">⭐</span>World Major</span>`;
+    wrap.insertBefore(leg, wrap.firstChild);
   });
 })();
 
