@@ -416,6 +416,7 @@
 <nav class="tab-nav">
   <div class="tab-bar">
     <button class="tab-btn active" data-tab="marathons" onclick="switchTab('marathons')">🏅 Marathons</button>
+    <button class="tab-btn" data-tab="half" onclick="switchTab('half')">½ Half Marathon</button>
     <button class="tab-btn" data-tab="trail" onclick="switchTab('trail')">⛰️ Trail</button>
     <button class="tab-btn" data-tab="training" onclick="switchTab('training')">📈 Training</button>
   </div>
@@ -554,7 +555,7 @@
       </div>
     </div>
     <div>
-      <div class="section-title">Distance from Ankara — unique cities</div>
+      <div class="section-title">Distance from Home — unique cities</div>
       <div class="chart-card">
         <div style="position:relative;height:320px"><canvas id="distanceChart"></canvas></div>
       </div>
@@ -756,6 +757,74 @@
 
 </div><!-- /tab-trail -->
 
+<div id="tab-half" class="tab-content">
+
+  <!-- HALF MARATHON STATS -->
+  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px" id="halfStats"></div>
+
+  <!-- CITY BAR + COUNTRY BREAKDOWN -->
+  <div class="section two-col">
+    <div>
+      <div class="section-title">Races by City</div>
+      <div class="chart-card">
+        <div style="position:relative;height:300px"><canvas id="halfCityChart"></canvas></div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Races by Country</div>
+      <div class="chart-card">
+        <div style="position:relative;height:300px"><canvas id="halfCountryChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORLD MAP -->
+  <div class="section">
+    <div class="section-title">Race Locations</div>
+    <div class="chart-card">
+      <div id="halfMap" style="height:340px;border-radius:10px;overflow:hidden"></div>
+    </div>
+  </div>
+
+  <!-- LATITUDE + DISTANCE ROW -->
+  <div class="section two-col">
+    <div>
+      <div class="section-title">City Latitude</div>
+      <div class="chart-card">
+        <div style="position:relative;height:300px"><canvas id="halfLatChart"></canvas></div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Distance from Home</div>
+      <div class="chart-card">
+        <div style="position:relative;height:300px"><canvas id="halfDistChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTINENT BREAKDOWN -->
+  <div class="section">
+    <div class="section-title">Continent Breakdown</div>
+    <div class="chart-card">
+      <div class="continent-card">
+        <div class="continent-donut">
+          <canvas id="halfContChart"></canvas>
+        </div>
+        <div class="continent-legend" id="halfContLegend"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CITY PASSPORT CARDS -->
+  <div class="section">
+    <div class="section-title">City Passport</div>
+    <div class="chart-card">
+      <div class="passport-grid" id="halfPassport"></div>
+    </div>
+  </div>
+
+</div><!-- /tab-half -->
+
   <footer>
     🏅 60 Marathons &nbsp;·&nbsp; ⛰️ 7 Trail Races &nbsp;·&nbsp; 🌍 19 Countries &nbsp;·&nbsp; 📏 35,819 km total
   </footer>
@@ -774,7 +843,7 @@ const races = [
   { name:"Berlin",        year:2018, time:"2:52", country:"GER", major:true  },
   { name:"Mersin",        year:2018, time:"4:10", country:"TUR", major:false },
   { name:"Antalya",       year:2019, time:"2:55", country:"TUR", major:false },
-  { name:"Roma",          year:2019, time:"2:55", country:"ITA", major:false },
+  { name:"Rome",          year:2019, time:"2:55", country:"ITA", major:false },
   { name:"Stockholm",     year:2019, time:"2:57", country:"SWE", major:false },
   { name:"Chicago",       year:2019, time:"3:17", country:"USA", major:true  },
   { name:"New York",      year:2019, time:"3:42", country:"USA", major:true  },
@@ -787,7 +856,7 @@ const races = [
   { name:"Midnight Sun",  year:2022, time:"3:23", country:"NOR", major:false },
   { name:"Aalborg Fjord", year:2022, time:"4:12", country:"DEN", major:false },
   { name:"Trondheim",     year:2022, time:"3:13", country:"NOR", major:false },
-  { name:"Köln",          year:2022, time:"3:09", country:"GER", major:false },
+  { name:"Cologne",       year:2022, time:"3:09", country:"GER", major:false },
   { name:"Amsterdam",     year:2022, time:"3:00", country:"NED", major:false },
   { name:"Lucerne",       year:2022, time:"3:23", country:"SWISS", major:false },
   { name:"Istanbul",      year:2022, time:"3:18", country:"TUR", major:false },
@@ -810,7 +879,7 @@ const races = [
   { name:"Midnight Sun",  year:2024, time:"3:03", country:"NOR", major:false },
   { name:"Reykjavik",     year:2024, time:"3:13", country:"ICE", major:false },
   { name:"Colmar",        year:2024, time:"3:08", country:"FRA", major:false },
-  { name:"Köln",          year:2024, time:"2:57", country:"GER", major:false },
+  { name:"Cologne",       year:2024, time:"2:57", country:"GER", major:false },
   { name:"Frankfurt",     year:2024, time:"3:16", country:"GER", major:false },
   { name:"Athens",        year:2024, time:"3:22", country:"GRE", major:false },
   { name:"Polar Night",   year:2025, time:"4:22", country:"NOR", major:false },
@@ -1573,6 +1642,255 @@ function openHeatmapModal(year, countryCode) {
 }
 
 /* ═══════════════════════════════════════════════════════
+   HALF MARATHON
+═══════════════════════════════════════════════════════ */
+(function(){
+  const halfData = [
+    { city:'Adana',     country:'TUR', flag:'🇹🇷', count:2, lat:37.00, lng:35.32  },
+    { city:'Ankara',    country:'TUR', flag:'🇹🇷', count:2, lat:39.93, lng:32.86  },
+    { city:'Amsterdam', country:'NED', flag:'🇳🇱', count:2, lat:52.37, lng:4.90   },
+    { city:'İzmir',     country:'TUR', flag:'🇹🇷', count:2, lat:38.42, lng:27.14  },
+    { city:'Hawaii',    country:'USA', flag:'🇺🇸', count:1, lat:21.31, lng:-157.80 },
+    { city:'Ghent',     country:'BEL', flag:'🇧🇪', count:1, lat:51.05, lng:3.72   },
+    { city:'Giresun',   country:'TUR', flag:'🇹🇷', count:1, lat:40.92, lng:38.39  },
+    { city:'Bodrum',    country:'TUR', flag:'🇹🇷', count:1, lat:37.03, lng:27.43  },
+    { city:'Çeşme',    country:'TUR', flag:'🇹🇷', count:1, lat:38.32, lng:26.30  },
+  ];
+
+  const ANKARA_LAT = 39.9333, ANKARA_LNG = 32.8597;
+  function haversine(lat1,lng1,lat2,lng2){
+    const R=6371, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
+    const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+    return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)));
+  }
+
+  const continentMap = { TUR:'Asia', NED:'Europe', BEL:'Europe', USA:'North America' };
+  const contColors   = { Asia:'#f97316', Europe:'#3b82f6', 'North America':'#22c55e' };
+
+  const totalRaces  = halfData.reduce((s,d) => s+d.count, 0);
+  const totalCities = halfData.length;
+  const totalKm     = Math.round(totalRaces * 21.0975);
+  const countries   = [...new Set(halfData.map(d => d.country))].length;
+
+  // ── Stats ─────────────────────────────────────────────
+  document.getElementById('halfStats').innerHTML = `
+    <div class="stat-card c-blue"><div class="stat-icon">½</div><div class="stat-value">${totalRaces}</div><div class="stat-label">Half Marathons</div></div>
+    <div class="stat-card c-orange"><div class="stat-icon">🏙️</div><div class="stat-value">${totalCities}</div><div class="stat-label">Cities</div></div>
+    <div class="stat-card c-green"><div class="stat-icon">🌍</div><div class="stat-value">${countries}</div><div class="stat-label">Countries</div></div>
+    <div class="stat-card c-teal"><div class="stat-icon">📏</div><div class="stat-value">${totalKm}</div><div class="stat-label">Total km</div></div>
+  `;
+
+  const palette = ['#f97316','#fbbf24','#3b82f6','#22c55e','#a78bfa','#ec4899','#06b6d4','#10b981','#f43f5e'];
+  const sorted  = [...halfData].sort((a,b) => b.count - a.count);
+
+  // ── City bar chart ─────────────────────────────────────
+  new Chart(document.getElementById('halfCityChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: sorted.map(d => `${d.flag} ${d.city}`),
+      datasets: [{ data: sorted.map(d => d.count),
+        backgroundColor: palette.map(c => c+'bb'),
+        borderColor: palette, borderWidth:1.5, borderRadius:8 }]
+    },
+    options: {
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins: { legend:{display:false},
+        tooltip:{ backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          callbacks:{ label: i=>`${i.raw} race${i.raw>1?'s':''}` }}},
+      scales: {
+        x:{ grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8b949e',stepSize:1} },
+        y:{ grid:{display:false}, ticks:{color:'#e6edf3', font:{size:13}} }
+      }
+    }
+  });
+
+  // ── Country doughnut ───────────────────────────────────
+  const countryTotals = {}, countryFlags = {};
+  halfData.forEach(d => {
+    countryTotals[d.country] = (countryTotals[d.country]||0) + d.count;
+    countryFlags[d.country]  = d.flag;
+  });
+  const cLabels = Object.keys(countryTotals);
+  const cCounts = cLabels.map(c => countryTotals[c]);
+  const cColors = ['#f97316','#3b82f6','#22c55e','#fbbf24'];
+
+  new Chart(document.getElementById('halfCountryChart').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: cLabels.map(c => `${countryFlags[c]} ${c}`),
+      datasets:[{ data:cCounts,
+        backgroundColor: cColors.map(c=>c+'cc'),
+        borderColor: cColors, borderWidth:2, hoverOffset:10 }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false, cutout:'65%',
+      plugins: {
+        legend:{ display:true, position:'bottom', labels:{ color:'#8b949e', boxWidth:12, font:{size:12}, padding:14 }},
+        tooltip:{ backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          callbacks:{ label: i=>`${i.raw} race${i.raw>1?'s':''} (${((i.raw/totalRaces)*100).toFixed(0)}%)` }}
+      }
+    },
+    plugins:[{
+      id:'centerText',
+      beforeDraw(chart){
+        const {ctx,chartArea:{top,bottom,left,right}}=chart;
+        ctx.save();
+        const cx=(left+right)/2, cy=(top+bottom)/2;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillStyle='#e6edf3'; ctx.font='bold 26px system-ui';
+        ctx.fillText(totalRaces, cx, cy-10);
+        ctx.fillStyle='#8b949e'; ctx.font='11px system-ui';
+        ctx.fillText('half marathons', cx, cy+12);
+        ctx.restore();
+      }
+    }]
+  });
+
+  // ── Leaflet map ────────────────────────────────────────
+  const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+  const halfMap = L.map('halfMap', { zoomControl:true, scrollWheelZoom:false }).setView([35,15], 2);
+  const darkTile = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+  const lightTile= 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+  let halfTileLayer = L.tileLayer(isDark ? darkTile : lightTile, {
+    attribution:'&copy; OpenStreetMap &copy; CARTO', subdomains:'abcd', maxZoom:19
+  }).addTo(halfMap);
+
+  halfData.forEach(d => {
+    const r = 6 + d.count * 4;
+    L.circleMarker([d.lat, d.lng], {
+      radius: r, color:'#f97316', fillColor:'#f97316',
+      fillOpacity:0.7, weight:2
+    }).addTo(halfMap)
+     .bindPopup(`<b>${d.flag} ${d.city}</b><br>${d.count} race${d.count>1?'s':''}`);
+  });
+
+  document.getElementById('themeBtn').addEventListener('click', () => {
+    const dark = document.documentElement.getAttribute('data-theme') !== 'light';
+    halfTileLayer.setUrl(dark ? lightTile : darkTile);
+  });
+
+  // ── Latitude bar chart ─────────────────────────────────
+  const latSorted = [...halfData].sort((a,b) => b.lat - a.lat);
+  new Chart(document.getElementById('halfLatChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: latSorted.map(d => `${d.flag} ${d.city}`),
+      datasets:[{ data: latSorted.map(d => d.lat),
+        backgroundColor: latSorted.map(d => {
+          if(d.lat > 45) return '#3b82f6bb';
+          if(d.lat > 35) return '#22c55ebb';
+          return '#f97316bb';
+        }),
+        borderColor: latSorted.map(d => {
+          if(d.lat > 45) return '#3b82f6';
+          if(d.lat > 35) return '#22c55e';
+          return '#f97316';
+        }),
+        borderWidth:1.5, borderRadius:6 }]
+    },
+    options: {
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins: { legend:{display:false},
+        tooltip:{ backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          callbacks:{ label: i=>`${i.raw.toFixed(2)}° N` }}},
+      scales: {
+        x:{ grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8b949e'}, title:{display:true, text:'Latitude (°N)', color:'#8b949e'} },
+        y:{ grid:{display:false}, ticks:{color:'#e6edf3', font:{size:12}} }
+      }
+    }
+  });
+
+  // ── Distance from Home bar chart ─────────────────────
+  const distData = halfData.map(d => ({
+    ...d, dist: haversine(ANKARA_LAT, ANKARA_LNG, d.lat, d.lng)
+  })).sort((a,b) => b.dist - a.dist);
+
+  new Chart(document.getElementById('halfDistChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: distData.map(d => `${d.flag} ${d.city}`),
+      datasets:[{ data: distData.map(d => d.dist),
+        backgroundColor: distData.map(d => {
+          if(d.dist > 8000) return '#a78bfabb';
+          if(d.dist > 1000) return '#3b82f6bb';
+          return '#22c55ebb';
+        }),
+        borderColor: distData.map(d => {
+          if(d.dist > 8000) return '#a78bfa';
+          if(d.dist > 1000) return '#3b82f6';
+          return '#22c55e';
+        }),
+        borderWidth:1.5, borderRadius:6 }]
+    },
+    options: {
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins: { legend:{display:false},
+        tooltip:{ backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          callbacks:{ label: i=>`${i.raw.toLocaleString()} km from Home` }}},
+      scales: {
+        x:{ grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8b949e'}, title:{display:true, text:'Distance (km)', color:'#8b949e'} },
+        y:{ grid:{display:false}, ticks:{color:'#e6edf3', font:{size:12}} }
+      }
+    }
+  });
+
+  // ── Continent doughnut ─────────────────────────────────
+  const contTotals = {};
+  halfData.forEach(d => {
+    const cont = continentMap[d.country] || 'Other';
+    contTotals[cont] = (contTotals[cont]||0) + d.count;
+  });
+  const contLabels = Object.keys(contTotals);
+  const contCounts = contLabels.map(c => contTotals[c]);
+  const contColArr = contLabels.map(c => contColors[c] || '#8b949e');
+
+  new Chart(document.getElementById('halfContChart').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: contLabels,
+      datasets:[{ data: contCounts,
+        backgroundColor: contColArr.map(c=>c+'cc'),
+        borderColor: contColArr, borderWidth:2, hoverOffset:10 }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false, cutout:'60%',
+      plugins: {
+        legend:{ display:false },
+        tooltip:{ backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          callbacks:{ label: i=>`${i.raw} race${i.raw>1?'s':''} (${((i.raw/totalRaces)*100).toFixed(0)}%)` }}
+      }
+    }
+  });
+
+  // continent legend
+  const legEl = document.getElementById('halfContLegend');
+  contLabels.forEach((c,i) => {
+    const pct = ((contCounts[i]/totalRaces)*100).toFixed(0);
+    legEl.innerHTML += `
+      <div class="legend-item">
+        <span class="legend-dot" style="background:${contColArr[i]}"></span>
+        <div>
+          <div class="legend-name">${c}</div>
+          <div class="legend-pct">${contCounts[i]} races · ${pct}%</div>
+        </div>
+      </div>`;
+  });
+
+  // ── City passport cards ────────────────────────────────
+  const grid = document.getElementById('halfPassport');
+  sorted.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'passport-item';
+    el.title = `${d.city}: ${d.count} race${d.count>1?'s':''}`;
+    el.innerHTML = `
+      <div class="passport-flag">${d.flag}</div>
+      <div class="passport-name">${d.city}</div>
+      <div class="passport-count">${d.count}</div>`;
+    grid.appendChild(el);
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════
    ANNUAL TRAINING LOG
 ═══════════════════════════════════════════════════════ */
 (function() {
@@ -1723,7 +2041,7 @@ function openHeatmapModal(year, countryCode) {
     52.5, // Berlin 2018
     36.8, // Mersin 2018
     36.9, // Antalya 2019
-    41.9, // Roma 2019
+    41.9, // Rome 2019
     59.3, // Stockholm 2019
     41.9, // Chicago 2019
     40.7, // New York 2019
@@ -1736,7 +2054,7 @@ function openHeatmapModal(year, countryCode) {
     69.7, // Midnight Sun 2022 — Tromsø
     57.0, // Aalborg 2022
     63.4, // Trondheim 2022
-    50.9, // Köln 2022
+    50.9, // Cologne 2022
     52.4, // Amsterdam 2022
     47.1, // Lucerne 2022
     41.0, // Istanbul 2022
@@ -1759,7 +2077,7 @@ function openHeatmapModal(year, countryCode) {
     69.7, // Midnight Sun 2024 — Tromsø
     64.1, // Reykjavik 2024
     48.1, // Colmar 2024
-    50.9, // Köln 2024
+    50.9, // Cologne 2024
     50.1, // Frankfurt 2024
     37.9, // Athens 2024
     69.7, // Polar Night 2025 — Tromsø
@@ -2153,7 +2471,7 @@ function openHeatmapModal(year, countryCode) {
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},
         tooltip:{backgroundColor:'#1f2937',borderColor:'#374151',borderWidth:1,padding:12,
-          callbacks:{label:i=>`${i.raw.toLocaleString()} km from Ankara`}}},
+          callbacks:{label:i=>`${i.raw.toLocaleString()} km from Home`}}},
       scales:{x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8b949e',callback:v=>`${(v/1000).toFixed(0)}k km`}},
         y:{grid:{display:false},ticks:{color:'#e6edf3',font:{size:10}}}}}
   });
