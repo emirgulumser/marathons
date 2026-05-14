@@ -163,7 +163,27 @@
       transition: transform 0.15s, border-color 0.15s;
     }
     .passport-item:hover { transform: translateY(-3px); border-color: #f97316; }
-    .passport-flag { font-size: 1.8rem; }
+    .passport-flag {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 30px;
+    }
+    .flag-img {
+      display: inline-block;
+      vertical-align: middle;
+      border-radius: 2px;
+      object-fit: contain;
+      box-shadow: 0 0 0 1px rgba(128, 128, 128, 0.28);
+    }
+    .cell-flag-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      vertical-align: middle;
+      max-width: 100%;
+    }
+    .cell-flag-label .flag-img { flex-shrink: 0; }
+    .heatmap-table th .flag-img { display: block; margin: 0 auto; }
+    .passport-flag .flag-img { width: 40px; height: auto; max-height: 30px; object-fit: contain; }
     .passport-name { font-size: 0.65rem; color: var(--muted); text-align: center; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
     .passport-count {
       font-size: 0.85rem; font-weight: 800; color: #f97316;
@@ -269,7 +289,11 @@
       transition: background 0.15s;
     }
     .modal-close:hover { background: var(--border); color: var(--text); }
-    .modal-flag { font-size: 3rem; margin-bottom: 4px; }
+    .modal-flag {
+      min-height: 52px; margin-bottom: 4px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .modal-flag .flag-img { width: 56px; height: auto; max-height: 44px; object-fit: contain; }
     .modal-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 4px; }
     .modal-subtitle { color: var(--muted); font-size: 0.88rem; margin-bottom: 16px; }
     .modal-time { font-size: 3rem; font-weight: 900; line-height: 1; margin: 16px 0; font-variant-numeric: tabular-nums; }
@@ -289,7 +313,11 @@
     }
     .leaflet-popup-tip { background: var(--card) !important; }
     .leaflet-popup-content { color: var(--text) !important; margin: 12px 16px !important; }
-    .map-popup-title { font-weight: 700; font-size: 1rem; margin-bottom: 4px; }
+    .map-popup-title {
+      font-weight: 700; font-size: 1rem; margin-bottom: 4px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .map-popup-title .flag-img { flex-shrink: 0; }
     .map-popup-count { color: #f97316; font-weight: 600; }
 
     /* ── CONTINENT CARD ──────────────────────────────── */
@@ -874,25 +902,25 @@ const races = [
 ];
 
 const countryData = [
-  { code:"TUR",  name:"Turkey",       flag:"🇹🇷", count:13, lat:39.0,  lng:35.0  },
-  { code:"GER",  name:"Germany",      flag:"🇩🇪", count:8,  lat:51.2,  lng:10.4  },
-  { code:"NOR",  name:"Norway",       flag:"🇳🇴", count:6,  lat:60.5,  lng:8.5   },
-  { code:"NED",  name:"Netherlands",  flag:"🇳🇱", count:4,  lat:52.4,  lng:5.3   },
-  { code:"DEN",  name:"Denmark",      flag:"🇩🇰", count:4,  lat:56.0,  lng:9.5   },
-  { code:"USA",  name:"USA",          flag:"🇺🇸", count:3,  lat:38.0,  lng:-97.0 },
-  { code:"UK",   name:"UK",           flag:"🇬🇧", count:3,  lat:54.0,  lng:-2.0  },
-  { code:"SER",  name:"Serbia",       flag:"🇷🇸", count:3,  lat:44.0,  lng:21.0  },
-  { code:"FRA",  name:"France",       flag:"🇫🇷", count:2,  lat:46.2,  lng:2.2   },
-  { code:"GRE",  name:"Greece",       flag:"🇬🇷", count:2,  lat:39.1,  lng:22.0  },
-  { code:"JAP",  name:"Japan",        flag:"🇯🇵", count:2,  lat:36.2,  lng:138.0 },
-  { code:"SWISS",name:"Switzerland",  flag:"🇨🇭", count:2,  lat:46.8,  lng:8.2   },
-  { code:"SPA",  name:"Spain",        flag:"🇪🇸", count:2,  lat:40.4,  lng:-3.7  },
-  { code:"SWE",  name:"Sweden",       flag:"🇸🇪", count:1,  lat:60.1,  lng:18.6  },
-  { code:"CZE",  name:"Czech Rep.",   flag:"🇨🇿", count:1,  lat:49.8,  lng:15.5  },
-  { code:"ITA",  name:"Italy",        flag:"🇮🇹", count:1,  lat:42.8,  lng:12.8  },
-  { code:"POL",  name:"Poland",       flag:"🇵🇱", count:1,  lat:52.1,  lng:19.4  },
-  { code:"ICE",  name:"Iceland",      flag:"🇮🇸", count:1,  lat:64.5,  lng:-18.0 },
-  { code:"MLA",  name:"Malta",        flag:"🇲🇹", count:1,  lat:35.9,  lng:14.4  },
+  { code:"TUR",  name:"Turkey",       count:13, lat:39.0,  lng:35.0  },
+  { code:"GER",  name:"Germany",      count:8,  lat:51.2,  lng:10.4  },
+  { code:"NOR",  name:"Norway",       count:6,  lat:60.5,  lng:8.5   },
+  { code:"NED",  name:"Netherlands",  count:4,  lat:52.4,  lng:5.3   },
+  { code:"DEN",  name:"Denmark",      count:4,  lat:56.0,  lng:9.5   },
+  { code:"USA",  name:"USA",          count:3,  lat:38.0,  lng:-97.0 },
+  { code:"UK",   name:"UK",           count:3,  lat:54.0,  lng:-2.0  },
+  { code:"SER",  name:"Serbia",       count:3,  lat:44.0,  lng:21.0  },
+  { code:"FRA",  name:"France",       count:2,  lat:46.2,  lng:2.2   },
+  { code:"GRE",  name:"Greece",       count:2,  lat:39.1,  lng:22.0  },
+  { code:"JAP",  name:"Japan",        count:2,  lat:36.2,  lng:138.0 },
+  { code:"SWISS",name:"Switzerland",  count:2,  lat:46.8,  lng:8.2   },
+  { code:"SPA",  name:"Spain",        count:2,  lat:40.4,  lng:-3.7  },
+  { code:"SWE",  name:"Sweden",       count:1,  lat:60.1,  lng:18.6  },
+  { code:"CZE",  name:"Czech Rep.",   count:1,  lat:49.8,  lng:15.5  },
+  { code:"ITA",  name:"Italy",        count:1,  lat:42.8,  lng:12.8  },
+  { code:"POL",  name:"Poland",       count:1,  lat:52.1,  lng:19.4  },
+  { code:"ICE",  name:"Iceland",      count:1,  lat:64.5,  lng:-18.0 },
+  { code:"MLA",  name:"Malta",        count:1,  lat:35.9,  lng:14.4  },
 ];
 
 /* ═══════════════════════════════════════════════════════
@@ -901,6 +929,72 @@ const countryData = [
 const parseTime = t => { const [h,m] = t.split(':').map(Number); return h*60+m; };
 const fmtTime   = m => `${Math.floor(m/60)}:${(m%60).toString().padStart(2,'0')}`;
 const timeColor = m => m<175?'#fbbf24': m<180?'#22c55e': m<195?'#86efac': m>=240?'#ef4444':'#3b82f6';
+
+/** ISO 3166-1 alpha-2 for flag images (emoji flags are unreliable on Windows). */
+const COUNTRY_ISO2 = {
+  TUR:'tr', GER:'de', NOR:'no', NED:'nl', DEN:'dk', USA:'us', UK:'gb', SER:'rs',
+  FRA:'fr', GRE:'gr', JAP:'jp', SWISS:'ch', SPA:'es', SWE:'se', CZE:'cz', ITA:'it',
+  POL:'pl', ICE:'is', MLA:'mt', BEL:'be'
+};
+function flagImgHtml(countryCode, w = 24) {
+  const iso = COUNTRY_ISO2[countryCode];
+  if (!iso) return '';
+  const h = Math.max(12, Math.round(w * 3 / 4));
+  /* flagcdn only serves select widths (w20, w40, …); arbitrary w22/w48 return 404. */
+  const src = `https://flagcdn.com/w40/${iso}.png`;
+  return `<img class="flag-img" src="${src}" alt="" width="${w}" height="${h}" loading="lazy" decoding="async">`;
+}
+
+/** Flags for horizontal bar charts (indexAxis:'y') — canvas cannot use HTML flags in tick text. */
+function createYAxisFlagBarPlugin(pluginId, getCountryCodeForIndex, opt = {}) {
+  const flagW = opt.flagW ?? 20;
+  const flagH = opt.flagH ?? 15;
+  const gap = opt.gap ?? 8;
+  const imgCache = new Map();
+
+  function ensureImg(iso, chart) {
+    if (!iso) return null;
+    if (!imgCache.has(iso)) {
+      const im = new Image();
+      im.decoding = 'async';
+      im.onload = () => { try { chart.update('none'); } catch (_) {} };
+      im.src = `https://flagcdn.com/w40/${iso}.png`;
+      imgCache.set(iso, im);
+    }
+    return imgCache.get(iso);
+  }
+
+  return {
+    id: pluginId,
+    afterInit(chart) {
+      const n = chart.data.labels.length;
+      for (let i = 0; i < n; i++) {
+        const iso = COUNTRY_ISO2[getCountryCodeForIndex(i)];
+        if (iso) ensureImg(iso, chart);
+      }
+    },
+    afterDatasetsDraw(chart) {
+      const meta = chart.getDatasetMeta(0);
+      if (!meta || !meta.data || !meta.data.length) return;
+      const { ctx } = chart;
+      /* Room must exist between tick labels and bars (y.ticks.padding); draw in that strip. */
+      const xFlag = chart.chartArea.left - flagW - gap;
+      meta.data.forEach((bar, i) => {
+        const iso = COUNTRY_ISO2[getCountryCodeForIndex(i)];
+        if (!iso) return;
+        const img = ensureImg(iso, chart);
+        if (!img || !img.complete || !img.naturalWidth) return;
+        const cy = bar.y;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(128,128,128,0.4)';
+        ctx.lineWidth = 1;
+        ctx.drawImage(img, xFlag, cy - flagH / 2, flagW, flagH);
+        ctx.strokeRect(xFlag + 0.5, cy - flagH / 2 + 0.5, flagW - 1, flagH - 1);
+        ctx.restore();
+      });
+    }
+  };
+}
 
 const countryMap = {};
 countryData.forEach(c => { countryMap[c.code] = c; });
@@ -1139,13 +1233,15 @@ let activeCountryFilter = null;
   const chart = new Chart(ctx, {
     type:'bar',
     data:{
-      labels: countryData.map(c=>`${c.flag} ${c.name}`),
+      labels: countryData.map(c=>c.name),
       datasets:[{ data:countryData.map(c=>c.count),
         backgroundColor: palette.map(c=>c+'cc'),
         borderColor: palette, borderWidth:1.5, borderRadius:6 }]
     },
     options:{
-      indexAxis:'y', ...chartOpts(),
+      indexAxis:'y',
+      layout: { padding: { left: 6 } },
+      ...chartOpts(),
       onClick(e, els){
         if(!els.length){ activeCountryFilter=null; }
         else {
@@ -1168,9 +1264,10 @@ let activeCountryFilter = null;
       },
       scales:{
         x:{ grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8b949e',stepSize:1} },
-        y:{ grid:{display:false}, ticks:{color:'#e6edf3', font:{size:12}} }
+        y:{ grid:{display:false}, ticks:{color:'#e6edf3', font:{size:12}, padding: 32} }
       }
-    }
+    },
+    plugins: [createYAxisFlagBarPlugin('flags_racesByCountry', i => countryData[i].code)]
   });
 })();
 
@@ -1238,7 +1335,7 @@ let activeCountryFilter = null;
     const raceList = races.filter(r=>r.country===c.code);
     const best = Math.min(...raceList.map(r=>r.minutes));
     circle.bindPopup(`
-      <div class="map-popup-title">${c.flag} ${c.name}</div>
+      <div class="map-popup-title">${flagImgHtml(c.code, 22)}<span>${c.name}</span></div>
       <div class="map-popup-count">${c.count} race${c.count>1?'s':''}</div>
       <div style="margin-top:6px;font-size:0.85rem;color:#8b949e">Best: ${fmtTime(best)}</div>
     `);
@@ -1363,7 +1460,7 @@ let activeCountryFilter = null;
     const el = document.createElement('div');
     el.className = 'passport-item';
     el.title = `${c.name}: ${c.count} race${c.count>1?'s':''}`;
-    el.innerHTML = `<div class="passport-flag">${c.flag}</div><div class="passport-name">${c.name}</div><div class="passport-count">${c.count}</div>`;
+    el.innerHTML = `<div class="passport-flag">${flagImgHtml(c.code, 40)}</div><div class="passport-name">${c.name}</div><div class="passport-count">${c.count}</div>`;
     el.onclick = () => {
       activeCountryFilter = activeCountryFilter===c.code ? null : c.code;
       renderTable();
@@ -1383,7 +1480,7 @@ let activeCountryFilter = null;
   const maxVal = Math.max(...Object.values(matrix));
 
   let html = '<table class="heatmap-table"><thead><tr><th class="year-head">Year</th>';
-  countries.forEach(c=>{ html+=`<th title="${c.name}">${c.flag}</th>`; });
+  countries.forEach(c=>{ html+=`<th title="${c.name}" style="text-align:center;padding:6px 4px;vertical-align:middle">${flagImgHtml(c.code, 22)}</th>`; });
   html+='</tr></thead><tbody>';
 
   years.forEach(y=>{
@@ -1480,15 +1577,15 @@ function renderTable(){
   const tbody = document.getElementById('racesBody');
   tbody.innerHTML='';
   list.forEach((r,i)=>{
-    const c = countryMap[r.country]||{flag:'',name:r.country};
+    const c = countryMap[r.country]||{name:r.country};
     const tc = r.minutes<180?'sub3':r.minutes<195?'fast':r.minutes>=240?'tough':'';
     const tr = document.createElement('tr');
     tr.onclick = ()=>openModal(r);
     tr.innerHTML=`
       <td style="color:var(--muted)">${i+1}</td>
-      <td>${r.name}${r.major?` <span class="major-badge">⭐</span>`:''}</td>
+      <td><span class="cell-flag-label">${flagImgHtml(r.country, 18)}<span>${r.name}${r.major?` <span class="major-badge">⭐</span>`:''}</span></span></td>
       <td>${r.year}</td>
-      <td>${c.flag} ${c.name}</td>
+      <td><span class="cell-flag-label">${flagImgHtml(r.country, 22)}<span>${c.name}</span></span></td>
       <td class="time-cell ${tc}">${r.time}</td>
       <td style="color:var(--muted);font-size:0.8rem">#${r.rank} fastest</td>`;
     tbody.appendChild(tr);
@@ -1517,13 +1614,13 @@ renderTable();
    MODAL
 ═══════════════════════════════════════════════════════ */
 function openModal(race){
-  const c = countryMap[race.country]||{flag:'',name:race.country};
+  const c = countryMap[race.country]||{name:race.country};
   const yearRaces = [...races.filter(r=>r.year===race.year)].sort((a,b)=>a.minutes-b.minutes);
   const yearRank  = yearRaces.indexOf(race)+1;
   const tc = race.minutes<180?'#22c55e':race.minutes<195?'#86efac':race.minutes>=240?'#ef4444':'#3b82f6';
 
   document.getElementById('modalContent').innerHTML=`
-    <div class="modal-flag">${c.flag}</div>
+    <div class="modal-flag">${flagImgHtml(race.country, 48)}</div>
     <div class="modal-title">${race.name}</div>
     <div class="modal-subtitle">${race.year} · ${c.name}${race.major?' · <span class="major-badge">⭐ World Major</span>':''}</div>
     <div class="modal-time" style="color:${tc}">${race.time}</div>
@@ -1565,7 +1662,7 @@ function switchTab(name) {
 }
 
 function openHeatmapModal(year, countryCode) {
-  const c = countryMap[countryCode] || { flag:'', name:countryCode };
+  const c = countryMap[countryCode] || { name:countryCode };
   const list = races
     .filter(r => r.year === year && r.country === countryCode)
     .sort((a,b) => a.minutes - b.minutes);
@@ -1608,7 +1705,7 @@ function openHeatmapModal(year, countryCode) {
     </div>` : '';
 
   document.getElementById('modalContent').innerHTML = `
-    <div class="modal-flag">${c.flag}</div>
+    <div class="modal-flag">${flagImgHtml(countryCode, 48)}</div>
     <div class="modal-title">${c.name}</div>
     <div class="modal-subtitle">${year} · ${list.length} race${list.length>1?'s':''}</div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">${rows}</div>
@@ -1622,15 +1719,15 @@ function openHeatmapModal(year, countryCode) {
 ═══════════════════════════════════════════════════════ */
 (function(){
   const halfData = [
-    { city:'Adana',     country:'TUR', flag:'🇹🇷', count:2, lat:37.00, lng:35.32  },
-    { city:'Ankara',    country:'TUR', flag:'🇹🇷', count:2, lat:39.93, lng:32.86  },
-    { city:'Amsterdam', country:'NED', flag:'🇳🇱', count:2, lat:52.37, lng:4.90   },
-    { city:'İzmir',     country:'TUR', flag:'🇹🇷', count:2, lat:38.42, lng:27.14  },
-    { city:'Hawaii',    country:'USA', flag:'🇺🇸', count:1, lat:21.31, lng:-157.80 },
-    { city:'Ghent',     country:'BEL', flag:'🇧🇪', count:1, lat:51.05, lng:3.72   },
-    { city:'Giresun',   country:'TUR', flag:'🇹🇷', count:1, lat:40.92, lng:38.39  },
-    { city:'Bodrum',    country:'TUR', flag:'🇹🇷', count:1, lat:37.03, lng:27.43  },
-    { city:'Çeşme',    country:'TUR', flag:'🇹🇷', count:1, lat:38.32, lng:26.30  },
+    { city:'Adana',     country:'TUR', count:2, lat:37.00, lng:35.32  },
+    { city:'Ankara',    country:'TUR', count:2, lat:39.93, lng:32.86  },
+    { city:'Amsterdam', country:'NED', count:2, lat:52.37, lng:4.90   },
+    { city:'İzmir',     country:'TUR', count:2, lat:38.42, lng:27.14  },
+    { city:'Hawaii',    country:'USA', count:1, lat:21.31, lng:-157.80 },
+    { city:'Ghent',     country:'BEL', count:1, lat:51.05, lng:3.72   },
+    { city:'Giresun',   country:'TUR', count:1, lat:40.92, lng:38.39  },
+    { city:'Bodrum',    country:'TUR', count:1, lat:37.03, lng:27.43  },
+    { city:'Çeşme',    country:'TUR', count:1, lat:38.32, lng:26.30  },
   ];
 
   const ANKARA_LAT = 39.9333, ANKARA_LNG = 32.8597;
@@ -1663,7 +1760,7 @@ function openHeatmapModal(year, countryCode) {
   new Chart(document.getElementById('halfCityChart').getContext('2d'), {
     type: 'bar',
     data: {
-      labels: sorted.map(d => `${d.flag} ${d.city}`),
+      labels: sorted.map(d => d.city),
       datasets: [{ data: sorted.map(d => d.count),
         backgroundColor: palette.map(c => c+'bb'),
         borderColor: palette, borderWidth:1.5, borderRadius:8 }]
@@ -1681,10 +1778,9 @@ function openHeatmapModal(year, countryCode) {
   });
 
   // ── Country doughnut ───────────────────────────────────
-  const countryTotals = {}, countryFlags = {};
+  const countryTotals = {};
   halfData.forEach(d => {
     countryTotals[d.country] = (countryTotals[d.country]||0) + d.count;
-    countryFlags[d.country]  = d.flag;
   });
   const cLabels = Object.keys(countryTotals);
   const cCounts = cLabels.map(c => countryTotals[c]);
@@ -1693,7 +1789,7 @@ function openHeatmapModal(year, countryCode) {
   new Chart(document.getElementById('halfCountryChart').getContext('2d'), {
     type: 'doughnut',
     data: {
-      labels: cLabels.map(c => `${countryFlags[c]} ${c}`),
+      labels: cLabels.map(c => `${c} (${countryTotals[c]})`),
       datasets:[{ data:cCounts,
         backgroundColor: cColors.map(c=>c+'cc'),
         borderColor: cColors, borderWidth:2, hoverOffset:10 }]
@@ -1737,7 +1833,7 @@ function openHeatmapModal(year, countryCode) {
       radius: r, color:'#f97316', fillColor:'#f97316',
       fillOpacity:0.7, weight:2
     }).addTo(halfMap)
-     .bindPopup(`<b>${d.flag} ${d.city}</b><br>${d.count} race${d.count>1?'s':''}`);
+     .bindPopup(`<div style="display:flex;align-items:center;gap:8px"><span>${flagImgHtml(d.country, 22)}</span><b>${d.city}</b></div><br>${d.count} race${d.count>1?'s':''}`);
   });
 
   document.getElementById('themeBtn').addEventListener('click', () => {
@@ -1750,7 +1846,7 @@ function openHeatmapModal(year, countryCode) {
   new Chart(document.getElementById('halfLatChart').getContext('2d'), {
     type: 'bar',
     data: {
-      labels: latSorted.map(d => `${d.flag} ${d.city}`),
+      labels: latSorted.map(d => d.city),
       datasets:[{ data: latSorted.map(d => d.lat),
         backgroundColor: latSorted.map(d => {
           if(d.lat > 45) return '#3b82f6bb';
@@ -1784,7 +1880,7 @@ function openHeatmapModal(year, countryCode) {
   new Chart(document.getElementById('halfDistChart').getContext('2d'), {
     type: 'bar',
     data: {
-      labels: distData.map(d => `${d.flag} ${d.city}`),
+      labels: distData.map(d => d.city),
       datasets:[{ data: distData.map(d => d.dist),
         backgroundColor: distData.map(d => {
           if(d.dist > 8000) return '#a78bfabb';
@@ -1859,7 +1955,7 @@ function openHeatmapModal(year, countryCode) {
     el.className = 'passport-item';
     el.title = `${d.city}: ${d.count} race${d.count>1?'s':''}`;
     el.innerHTML = `
-      <div class="passport-flag">${d.flag}</div>
+      <div class="passport-flag">${flagImgHtml(d.country, 40)}</div>
       <div class="passport-name">${d.city}</div>
       <div class="passport-count">${d.count}</div>`;
     grid.appendChild(el);
@@ -2241,10 +2337,9 @@ function openHeatmapModal(year, countryCode) {
   const majors=races.filter(r=>r.major).sort((a,b)=>a.idx-b.idx);
   let html=`<div style="display:flex;align-items:center;padding:24px 8px;overflow-x:auto">`;
   majors.forEach((r,i)=>{
-    const c=countryMap[r.country]||{flag:''};
     html+=`<div style="display:flex;flex-direction:column;align-items:center;gap:8px;min-width:110px;cursor:pointer"
       onclick="openModal(races[${r.idx-1}])">
-      <div style="font-size:1.6rem">${c.flag}</div>
+      <div style="display:flex;justify-content:center;align-items:center;min-height:44px">${flagImgHtml(r.country, 40)}</div>
       <div style="width:44px;height:44px;border-radius:50%;
         background:linear-gradient(135deg,#fbbf24,#f97316);
         display:flex;align-items:center;justify-content:center;
@@ -2328,12 +2423,16 @@ function openHeatmapModal(year, countryCode) {
   const ctx=document.getElementById('distanceChart').getContext('2d');
   new Chart(ctx,{
     type:'bar',
-    data:{labels:cities.map(c=>`${countryMap[c.country]?.flag||''} ${c.name}`),
+    data:{labels:cities.map(c=>c.name),
       datasets:[{data:cities.map(c=>c.diff),
         backgroundColor:cities.map(c=>c.diff>=0?'#3b82f699':'#f9731699'),
         borderColor:cities.map(c=>c.diff>=0?'#3b82f6':'#f97316'),
         borderWidth:1.5,borderRadius:4}]},
-    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+    options:{
+      indexAxis:'y',
+      layout: { padding: { left: 6 } },
+      responsive:true,
+      maintainAspectRatio:false,
       plugins:{legend:{display:false},
         tooltip:{backgroundColor:'#1f2937',borderColor:'#374151',borderWidth:1,padding:12,
           callbacks:{label:i=>{
@@ -2344,7 +2443,10 @@ function openHeatmapModal(year, countryCode) {
       scales:{
         x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8b949e',callback:v=>`${v>=0?'+':''}${v}°`},
           title:{display:true,text:'Latitude difference from Ankara (39.93°N)',color:'#8b949e',font:{size:11}}},
-        y:{grid:{display:false},ticks:{color:'#e6edf3',font:{size:10}}}}}
+        y:{grid:{display:false},ticks:{color:'#e6edf3',font:{size:10},padding:38}}
+      }
+    },
+    plugins: [createYAxisFlagBarPlugin('flags_latDistanceHome', i => cities[i].country)]
   });
 })();
 
@@ -2478,7 +2580,7 @@ function openHeatmapModal(year, countryCode) {
     const pct = ((totals[cont] / races.length) * 100).toFixed(1);
     const countries = Object.entries(countryBreakdown[cont])
       .sort((a,b) => b[1]-a[1])
-      .map(([code, n]) => `${countryMap[code]?.flag || ''} ${n}`)
+      .map(([code, n]) => `${flagImgHtml(code, 16)} ${n}`)
       .join('  ');
     const div = document.createElement('div');
     div.style.cssText = 'display:flex;flex-direction:column;gap:5px';
