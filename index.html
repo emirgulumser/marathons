@@ -437,7 +437,7 @@
   <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
   <div class="header-inner">
     <h1>Marathon & Running Log</h1>
-    <p>60 marathons · 19 countries · 35,819 km · 6 World Majors</p>
+    <p>61 marathons · 20 countries · 35,861 km · 6 World Majors</p>
   </div>
 </header>
 
@@ -464,8 +464,8 @@
 
   <!-- STATS -->
   <div class="stats-grid" id="statsGrid">
-    <div class="stat-card c-orange"><div class="stat-icon">🏅</div><div class="stat-value">60</div><div class="stat-label">Total Marathons</div></div>
-    <div class="stat-card c-blue"><div class="stat-icon">🌍</div><div class="stat-value">19</div><div class="stat-label">Countries</div></div>
+    <div class="stat-card c-orange"><div class="stat-icon">🏅</div><div class="stat-value">61</div><div class="stat-label">Total Marathons</div></div>
+    <div class="stat-card c-blue"><div class="stat-icon">🌍</div><div class="stat-value">20</div><div class="stat-label">Countries</div></div>
     <div class="stat-card c-gold"><div class="stat-icon">⚡</div><div class="stat-value">2:52</div><div class="stat-label">Personal Best</div></div>
     <div class="stat-card c-green"><div class="stat-icon">🟢</div><div class="stat-value" id="sSub3">—</div><div class="stat-label">Sub-3:00 Finishes</div></div>
     <div class="stat-card c-purple"><div class="stat-icon">⭐</div><div class="stat-value">6</div><div class="stat-label">World Majors</div></div>
@@ -476,7 +476,7 @@
 
   <!-- PROGRESS TIMELINE -->
   <div class="section">
-    <div class="section-title">Performance Timeline — all 60 races</div>
+    <div class="section-title">Performance Timeline — all 61 races</div>
     <div class="chart-card">
       <div class="chart-legend">
         <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div> PB set</div>
@@ -830,7 +830,7 @@
 </div><!-- /tab-half -->
 
   <footer>
-    🏅 60 Marathons &nbsp;·&nbsp; ⛰️ 7 Trail Races &nbsp;·&nbsp; 🌍 19 Countries &nbsp;·&nbsp; 📏 35,819 km total
+    🏅 61 Marathons &nbsp;·&nbsp; ⛰️ 7 Trail Races &nbsp;·&nbsp; 🌍 20 Countries &nbsp;·&nbsp; 📏 35,861 km total
   </footer>
 </div>
 
@@ -899,6 +899,7 @@ const races = [
   { name:"Belgrade",      year:2026, time:"3:01", country:"SER", major:false },
   { name:"Bergen",        year:2026, time:"3:33", country:"NOR", major:false },
   { name:"Copenhagen",    year:2026, time:"3:05", country:"DEN", major:false },
+  { name:"Beer Lovers",   year:2026, time:"3:26", country:"BEL", major:false },
 ];
 
 const countryData = [
@@ -921,6 +922,7 @@ const countryData = [
   { code:"POL",  name:"Poland",       count:1,  lat:52.1,  lng:19.4  },
   { code:"ICE",  name:"Iceland",      count:1,  lat:64.5,  lng:-18.0 },
   { code:"MLA",  name:"Malta",        count:1,  lat:35.9,  lng:14.4  },
+  { code:"BEL",  name:"Belgium",      count:1,  lat:50.6,  lng:5.6   },
 ];
 
 /* ═══════════════════════════════════════════════════════
@@ -1021,7 +1023,7 @@ const totalRem   = totalMins%60;
 const avgMins    = Math.round(totalMins/races.length);
 
 document.getElementById('sSub3').textContent  = sub3Count;
-document.getElementById('sKm').textContent    = '2,531';
+document.getElementById('sKm').textContent    = '2,574';
 document.getElementById('sTime').textContent  = `${totalHours}h`;
 document.getElementById('sAvg').textContent   = fmtTime(avgMins);
 
@@ -1628,7 +1630,7 @@ function openModal(race){
     <div class="modal-grid">
       <div class="modal-stat-box">
         <div class="modal-stat-label">Overall Rank</div>
-        <div class="modal-stat-val">#${race.rank} / 60</div>
+        <div class="modal-stat-val">#${race.rank} / 61</div>
       </div>
       <div class="modal-stat-box">
         <div class="modal-stat-label">Rank in ${race.year}</div>
@@ -2165,6 +2167,7 @@ function openHeatmapModal(year, countryCode) {
     44.8, // Belgrade 2026
     60.4, // Bergen 2026
     55.7, // Copenhagen 2026
+    50.6, // Beer Lovers 2026 — Liège
   ];
 
   races.forEach((r, i) => { r.lat = lats[i]; });
@@ -2173,7 +2176,7 @@ function openHeatmapModal(year, countryCode) {
     TUR:'Asia', JAP:'Asia', USA:'North America',
     GER:'Europe', NOR:'Europe', NED:'Europe', DEN:'Europe', UK:'Europe',
     SER:'Europe', FRA:'Europe', GRE:'Europe', SWISS:'Europe', SPA:'Europe',
-    SWE:'Europe', CZE:'Europe', ITA:'Europe', POL:'Europe', ICE:'Europe', MLA:'Europe',
+    SWE:'Europe', CZE:'Europe', ITA:'Europe', POL:'Europe', ICE:'Europe', MLA:'Europe', BEL:'Europe',
   };
   const contColor = { Europe:'#3b82f6', Asia:'#f97316', 'North America':'#22c55e' };
   const ptColor = r => contColor[continentMap[r.country]] || '#8b949e';
@@ -2227,7 +2230,7 @@ function openHeatmapModal(year, countryCode) {
       },
       scales: {
         x: { title:{ display:true, text:'Race #', color:'#8b949e', font:{size:11} },
-             grid:{ color:'rgba(255,255,255,0.04)' }, ticks:{ color:'#8b949e' }, min:0, max:62 },
+             grid:{ color:'rgba(255,255,255,0.04)' }, ticks:{ color:'#8b949e' }, min:0, max:63 },
         y: { title:{ display:true, text:'Latitude °N', color:'#8b949e', font:{size:11} },
              grid:{ color:'rgba(255,255,255,0.05)' }, ticks:{ color:'#8b949e', callback: v=>`${v}°N` },
              min:30, max:82 }
@@ -2370,7 +2373,8 @@ function openHeatmapModal(year, countryCode) {
     10.4,  6.9,  4.9,  8.3, 28.9, -0.4,139.7,  6.9, 22.9, 27.1,
     12.6, 15.6,  7.6, 21.0, 11.6, 28.9, 30.7, -0.1, -2.2, -0.1,
     20.5, 18.9,-22.0,  7.4,  6.9,  8.7, 23.7, 18.9, 20.5,  4.5,
-   141.35, 10.4, 11.6,  4.9,  8.3, -0.4, 14.5, 20.5,  5.3, 12.6
+   141.35, 10.4, 11.6,  4.9,  8.3, -0.4, 14.5, 20.5,  5.3, 12.6,
+    5.6   // Beer Lovers 2026 — Liège
   ];
   races.forEach((r,i)=>{ r.lng=lngs[i]; });
 
@@ -2401,7 +2405,7 @@ function openHeatmapModal(year, countryCode) {
           tok:{type:'line',yMin:139.7,yMax:139.7,borderColor:'rgba(249,115,22,0.35)',borderWidth:1,borderDash:[4,4],
             label:{content:'Tokyo',display:true,position:'end',backgroundColor:'transparent',color:'#fb923c',font:{size:10}}}}}},
       scales:{
-        x:{title:{display:true,text:'Race #',color:'#8b949e',font:{size:11}},grid:{color:'rgba(255,255,255,0.03)'},ticks:{color:'#8b949e'},min:0,max:62},
+        x:{title:{display:true,text:'Race #',color:'#8b949e',font:{size:11}},grid:{color:'rgba(255,255,255,0.03)'},ticks:{color:'#8b949e'},min:0,max:63},
         y:{title:{display:true,text:'Longitude',color:'#8b949e',font:{size:11}},grid:{color:'rgba(255,255,255,0.05)'},
           ticks:{color:'#8b949e',callback:v=>v>=0?`${v}°E`:`${Math.abs(v)}°W`},min:-100,max:150}}}
   });
@@ -2518,7 +2522,7 @@ function openHeatmapModal(year, countryCode) {
     USA:'North America',
     GER:'Europe', NOR:'Europe', NED:'Europe', DEN:'Europe', UK:'Europe',
     SER:'Europe', FRA:'Europe', GRE:'Europe', SWISS:'Europe', SPA:'Europe',
-    SWE:'Europe', CZE:'Europe', ITA:'Europe', POL:'Europe', ICE:'Europe', MLA:'Europe',
+    SWE:'Europe', CZE:'Europe', ITA:'Europe', POL:'Europe', ICE:'Europe', MLA:'Europe', BEL:'Europe',
   };
 
   const totals = {};
@@ -2559,7 +2563,7 @@ function openHeatmapModal(year, countryCode) {
         const cx = (left + right) / 2, cy = (top + bottom) / 2;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillStyle = '#e6edf3'; ctx.font = 'bold 28px system-ui';
-        ctx.fillText('60', cx, cy - 10);
+        ctx.fillText('61', cx, cy - 10);
         ctx.fillStyle = '#8b949e'; ctx.font = '12px system-ui';
         ctx.fillText('marathons', cx, cy + 14);
         ctx.restore();
