@@ -437,7 +437,7 @@
   <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
   <div class="header-inner">
     <h1>Marathon & Running Log</h1>
-    <p>61 marathons · 20 countries · 35,861 km · 6 World Majors</p>
+    <p>62 marathons · 20 countries · 35,903 km · 6 World Majors</p>
   </div>
 </header>
 
@@ -464,7 +464,7 @@
 
   <!-- STATS -->
   <div class="stats-grid" id="statsGrid">
-    <div class="stat-card c-orange"><div class="stat-icon">🏅</div><div class="stat-value">61</div><div class="stat-label">Total Marathons</div></div>
+    <div class="stat-card c-orange"><div class="stat-icon">🏅</div><div class="stat-value">62</div><div class="stat-label">Total Marathons</div></div>
     <div class="stat-card c-blue"><div class="stat-icon">🌍</div><div class="stat-value">20</div><div class="stat-label">Countries</div></div>
     <div class="stat-card c-gold"><div class="stat-icon">⚡</div><div class="stat-value">2:52</div><div class="stat-label">Personal Best</div></div>
     <div class="stat-card c-green"><div class="stat-icon">🟢</div><div class="stat-value" id="sSub3">—</div><div class="stat-label">Sub-3:00 Finishes</div></div>
@@ -476,7 +476,7 @@
 
   <!-- PROGRESS TIMELINE -->
   <div class="section">
-    <div class="section-title">Performance Timeline — all 61 races</div>
+    <div class="section-title">Performance Timeline — all 62 races</div>
     <div class="chart-card">
       <div class="chart-legend">
         <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div> PB set</div>
@@ -830,7 +830,7 @@
 </div><!-- /tab-half -->
 
   <footer>
-    🏅 61 Marathons &nbsp;·&nbsp; ⛰️ 7 Trail Races &nbsp;·&nbsp; 🌍 20 Countries &nbsp;·&nbsp; 📏 35,861 km total
+    🏅 62 Marathons &nbsp;·&nbsp; ⛰️ 7 Trail Races &nbsp;·&nbsp; 🌍 20 Countries &nbsp;·&nbsp; 📏 35,903 km total
   </footer>
 </div>
 
@@ -900,6 +900,7 @@ const races = [
   { name:"Bergen",        year:2026, time:"3:33", country:"NOR", major:false },
   { name:"Copenhagen",    year:2026, time:"3:05", country:"DEN", major:false },
   { name:"Beer Lovers",   year:2026, time:"3:26", country:"BEL", major:false },
+  { name:"Stockholm",     year:2026, time:"3:44", country:"SWE", major:false },
 ];
 
 const countryData = [
@@ -916,7 +917,7 @@ const countryData = [
   { code:"JAP",  name:"Japan",        count:2,  lat:36.2,  lng:138.0 },
   { code:"SWISS",name:"Switzerland",  count:2,  lat:46.8,  lng:8.2   },
   { code:"SPA",  name:"Spain",        count:2,  lat:40.4,  lng:-3.7  },
-  { code:"SWE",  name:"Sweden",       count:1,  lat:60.1,  lng:18.6  },
+  { code:"SWE",  name:"Sweden",       count:2,  lat:60.1,  lng:18.6  },
   { code:"CZE",  name:"Czech Rep.",   count:1,  lat:49.8,  lng:15.5  },
   { code:"ITA",  name:"Italy",        count:1,  lat:42.8,  lng:12.8  },
   { code:"POL",  name:"Poland",       count:1,  lat:52.1,  lng:19.4  },
@@ -1023,7 +1024,7 @@ const totalRem   = totalMins%60;
 const avgMins    = Math.round(totalMins/races.length);
 
 document.getElementById('sSub3').textContent  = sub3Count;
-document.getElementById('sKm').textContent    = '2,574';
+document.getElementById('sKm').textContent    = '2,616';
 document.getElementById('sTime').textContent  = `${totalHours}h`;
 document.getElementById('sAvg').textContent   = fmtTime(avgMins);
 
@@ -1630,7 +1631,7 @@ function openModal(race){
     <div class="modal-grid">
       <div class="modal-stat-box">
         <div class="modal-stat-label">Overall Rank</div>
-        <div class="modal-stat-val">#${race.rank} / 61</div>
+        <div class="modal-stat-val">#${race.rank} / 62</div>
       </div>
       <div class="modal-stat-box">
         <div class="modal-stat-label">Rank in ${race.year}</div>
@@ -1979,7 +1980,7 @@ function openHeatmapModal(year, countryCode) {
     { year:2023, km:4459, time:'371:14:32', runs:310 },
     { year:2024, km:4500, time:'375:53:49', runs:306 },
     { year:2025, km:3706, time:'314:30:28', runs:275 },
-    { year:2026, km:1714, time:'143:10:15', runs:121 },
+    { year:2026, km:1806, time:'150:56:23', runs:128 },
   ];
 
   log.forEach(d => {
@@ -2168,6 +2169,7 @@ function openHeatmapModal(year, countryCode) {
     60.4, // Bergen 2026
     55.7, // Copenhagen 2026
     50.6, // Beer Lovers 2026 — Liège
+    59.3, // Stockholm 2026
   ];
 
   races.forEach((r, i) => { r.lat = lats[i]; });
@@ -2230,7 +2232,7 @@ function openHeatmapModal(year, countryCode) {
       },
       scales: {
         x: { title:{ display:true, text:'Race #', color:'#8b949e', font:{size:11} },
-             grid:{ color:'rgba(255,255,255,0.04)' }, ticks:{ color:'#8b949e' }, min:0, max:63 },
+             grid:{ color:'rgba(255,255,255,0.04)' }, ticks:{ color:'#8b949e' }, min:0, max:64 },
         y: { title:{ display:true, text:'Latitude °N', color:'#8b949e', font:{size:11} },
              grid:{ color:'rgba(255,255,255,0.05)' }, ticks:{ color:'#8b949e', callback: v=>`${v}°N` },
              min:30, max:82 }
@@ -2374,7 +2376,8 @@ function openHeatmapModal(year, countryCode) {
     12.6, 15.6,  7.6, 21.0, 11.6, 28.9, 30.7, -0.1, -2.2, -0.1,
     20.5, 18.9,-22.0,  7.4,  6.9,  8.7, 23.7, 18.9, 20.5,  4.5,
    141.35, 10.4, 11.6,  4.9,  8.3, -0.4, 14.5, 20.5,  5.3, 12.6,
-    5.6   // Beer Lovers 2026 — Liège
+    5.6,  // Beer Lovers 2026 — Liège
+    18.1  // Stockholm 2026
   ];
   races.forEach((r,i)=>{ r.lng=lngs[i]; });
 
@@ -2405,7 +2408,7 @@ function openHeatmapModal(year, countryCode) {
           tok:{type:'line',yMin:139.7,yMax:139.7,borderColor:'rgba(249,115,22,0.35)',borderWidth:1,borderDash:[4,4],
             label:{content:'Tokyo',display:true,position:'end',backgroundColor:'transparent',color:'#fb923c',font:{size:10}}}}}},
       scales:{
-        x:{title:{display:true,text:'Race #',color:'#8b949e',font:{size:11}},grid:{color:'rgba(255,255,255,0.03)'},ticks:{color:'#8b949e'},min:0,max:63},
+        x:{title:{display:true,text:'Race #',color:'#8b949e',font:{size:11}},grid:{color:'rgba(255,255,255,0.03)'},ticks:{color:'#8b949e'},min:0,max:64},
         y:{title:{display:true,text:'Longitude',color:'#8b949e',font:{size:11}},grid:{color:'rgba(255,255,255,0.05)'},
           ticks:{color:'#8b949e',callback:v=>v>=0?`${v}°E`:`${Math.abs(v)}°W`},min:-100,max:150}}}
   });
@@ -2563,7 +2566,7 @@ function openHeatmapModal(year, countryCode) {
         const cx = (left + right) / 2, cy = (top + bottom) / 2;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillStyle = '#e6edf3'; ctx.font = 'bold 28px system-ui';
-        ctx.fillText('61', cx, cy - 10);
+        ctx.fillText('62', cx, cy - 10);
         ctx.fillStyle = '#8b949e'; ctx.font = '12px system-ui';
         ctx.fillText('marathons', cx, cy + 14);
         ctx.restore();
