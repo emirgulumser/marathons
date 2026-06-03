@@ -22,24 +22,21 @@ window.updateHeaderFooter = function updateHeaderFooter() {
 document.addEventListener('DOMContentLoaded', async () => {
   initTheme();
   try {
+    const ap = window.annotationPlugin || window['chartjs-plugin-annotation'];
+    if (typeof Chart !== 'undefined' && ap && Chart.register) Chart.register(ap);
+  } catch (_) { /* annotation plugin optional */ }
+  try {
     await loadAppData();
     updateHeaderFooter();
     renderGoals();
     initActiveTab();
   } catch (err) {
     console.error(err);
+    const hint = err.message.includes('Failed to load')
+      ? 'Check that data files exist and hard-refresh (Ctrl+Shift+R).'
+      : 'Hard-refresh the page (Ctrl+Shift+R) to clear cached scripts.';
     document.body.insertAdjacentHTML('afterbegin',
-      `<div style="background:#ef4444;color:#fff;padding:12px 24px;text-align:center">Failed to load data: ${err.message}. Serve via a local HTTP server.</div>`
+      `<div style="background:#ef4444;color:#fff;padding:12px 24px;text-align:center">Failed to load: ${err.message}. ${hint}</div>`
     );
   }
-});
-
-window.closeModal = window.closeModal || function closeModal(e) {
-  if (!e || e.target === document.getElementById('modal') || e.target.classList?.contains('modal-close')) {
-    document.getElementById('modal')?.classList.remove('open');
-  }
-};
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeModal();
 });

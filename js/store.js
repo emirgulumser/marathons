@@ -11,9 +11,14 @@ window.App = {
   stats: {},
 };
 
+function dataUrl(path) {
+  return new URL(path, window.APP_ROOT || document.baseURI).href;
+}
+
 async function loadJSON(path) {
-  const res = await fetch(path);
-  if (!res.ok) throw new Error(`Failed to load ${path}`);
+  const url = dataUrl(path);
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Failed to load ${path} (${res.status})`);
   return res.json();
 }
 

@@ -1,9 +1,17 @@
-import fs from 'fs';
+import https from 'https';
 import vm from 'vm';
-import path from 'path';
 
-const root = path.resolve('.');
-const v = '?v=20250603';
+const base = 'https://emirgulumser.github.io/marathons';
+
+function fetchText(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, (r) => {
+      let d = '';
+      r.on('data', (c) => { d += c; });
+      r.on('end', () => resolve({ ok: r.statusCode === 200, status: r.statusCode, text: d }));
+    }).on('error', reject);
+  });
+}
 
 const elements = new Map();
 const makeEl = () => ({
@@ -14,9 +22,7 @@ const makeEl = () => ({
 });
 
 global.window = global;
-global.APP_ROOT = 'file:///' + root.replace(/\\/g, '/') + '/';
 global.document = {
-  baseURI: APP_ROOT,
   documentElement: { getAttribute: () => 'dark', setAttribute: () => {} },
   createElement: makeEl,
   getElementById: (id) => {
@@ -31,7 +37,6 @@ global.document = {
 global.localStorage = { getItem: () => null, setItem: () => {} };
 global.Chart = class { constructor() {} update() {} };
 Chart.defaults = { color: '', borderColor: '' };
-Chart.register = () => {};
 global.L = {
   map: () => ({ setView: () => {}, addTo: () => {}, remove: () => {}, invalidateSize: () => {} }),
   tileLayer: () => ({ addTo: () => {}, setUrl: () => {}, remove: () => {} }),
@@ -40,21 +45,21 @@ global.L = {
   divIcon: () => ({}),
 };
 global.fetch = async (url) => {
-  const rel = url.includes('data/') ? url.slice(url.indexOf('data/')) : url;
-  const file = rel.replace(/\?.*$/, '');
-  return { ok: true, json: async () => JSON.parse(fs.readFileSync(path.join(root, file), 'utf8')) };
+  const r = await fetchText(`${base}/${url.replace(/^\//, '')}`);
+  if (!r.ok) throw new Error(`${r.status} ${url}`);
+  return { ok: true, json: async () => JSON.parse(r.text) };
 };
 
 const files = [
-  'js/config.js', 'js/utils.js', 'js/store.js', 'js/theme.js', 'js/modal.js',
-  'js/tabs.js', 'js/export.js', 'js/goals.js', 'js/marathons-tab.js',
-  'js/half-tab.js', 'js/training-tab.js', 'js/trail-tab.js', 'js/app.js',
+  'js/utils.js', 'js/store.js', 'js/theme.js', 'js/tabs.js', 'js/export.js', 'js/goals.js',
+  'js/marathons-tab.js', 'js/half-tab.js', 'js/training-tab.js', 'js/trail-tab.js', 'js/app.js',
 ];
 
 for (const f of files) {
-  vm.runInThisContext(fs.readFileSync(path.join(root, f), 'utf8'), { filename: f });
+  const r = await fetchText(`${base}/${f}`);
+  vm.runInThisContext(r.text, { filename: f });
 }
 
 await loadAppData();
 initActiveTab();
-console.log('LOCAL OK', App.stats.pbTime);
+console.log('LIVE JS OK', App.stats);
