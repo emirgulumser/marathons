@@ -120,7 +120,7 @@ const log = App.log;
     }
   });
 
-  (function(){
+  ;(function(){
   const yearBest={};
   races.forEach(r=>{if(!yearBest[r.year]||r.minutes<yearBest[r.year]) yearBest[r.year]=r.minutes;});
   const yrs=Object.keys(logKm).sort();
@@ -144,7 +144,7 @@ const log = App.log;
   });
 })();
 
-(function(){
+  ;(function(){
   const raceCounts={};
   races.forEach(r=>{raceCounts[r.year]=(raceCounts[r.year]||0)+1;});
   const yrs=Object.keys(logKm2).sort();

@@ -35,7 +35,21 @@ function enrichTraining(log) {
   return log;
 }
 
+function enrichRaces(races) {
+  let pb = Infinity;
+  races.forEach((r, i) => {
+    r.idx = i + 1;
+    r.minutes = parseTime(r.time);
+    r.isPB = r.minutes < pb;
+    if (r.isPB) pb = r.minutes;
+  });
+  const sortedByTime = [...races].sort((a, b) => a.minutes - b.minutes);
+  races.forEach(r => { r.rank = sortedByTime.indexOf(r) + 1; });
+  return pb;
+}
+
 function computeStats() {
+  enrichRaces(App.races);
   const { races, log, trails, halfRaces } = App;
   const pbMinutes = Math.min(...races.map(r => r.minutes));
 

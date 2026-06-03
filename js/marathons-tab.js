@@ -5,12 +5,15 @@ window.initMarathonsTab = function () {
 let pb = Infinity;
 App.races.forEach((r, i) => {
   r.idx = i + 1;
-  r.minutes = parseTime(r.time);
+  if (r.minutes == null) r.minutes = parseTime(r.time);
   r.isPB = r.minutes < pb;
   if (r.isPB) pb = r.minutes;
 });
-const sortedByTime = [...App.races].sort((a, b) => a.minutes - b.minutes);
-App.races.forEach(r => { r.rank = sortedByTime.indexOf(r) + 1; });
+if (!App.races[0]?.rank) {
+  const sortedByTime = [...App.races].sort((a, b) => a.minutes - b.minutes);
+  App.races.forEach(r => { r.rank = sortedByTime.indexOf(r) + 1; });
+}
+App.stats.pbMinutes = pb;
 App.countryMap = {};
 App.countryData.forEach(c => { App.countryMap[c.code] = c; });
 const races = App.races;
@@ -667,7 +670,8 @@ window.openHeatmapModal = function openHeatmapModal(year, countryCode) {
   document.getElementById('modal').classList.add('open');
 }
 
-(function() {
+  // ── Latitude charts ───────────────────────────────────
+  {
   const races = App.races;
   const continentMap = {
     TUR:'Asia', JAP:'Asia', USA:'North America',
@@ -795,9 +799,10 @@ window.openHeatmapModal = function openHeatmapModal(year, countryCode) {
     ).join('') + `<span style="display:flex;align-items:center;gap:5px"><span style="font-size:0.9rem">⭐</span>World Major</span>`;
     wrap.insertBefore(leg, wrap.firstChild);
   });
-})();
+  }
 
-(function() {
+  // ── Longitude chart ───────────────────────────────────
+  {
   const races = App.races;
   const cMap2={TUR:'Asia',JAP:'Asia',USA:'North America'};
   const cc2={Asia:'#f97316','North America':'#22c55e',Europe:'#3b82f6'};
@@ -830,7 +835,7 @@ window.openHeatmapModal = function openHeatmapModal(year, countryCode) {
         y:{title:{display:true,text:'Longitude',color:'#8b949e',font:{size:11}},grid:{color:'rgba(255,255,255,0.05)'},
           ticks:{color:'#8b949e',callback:v=>v>=0?`${v}°E`:`${Math.abs(v)}°W`},min:-100,max:150}}}
   });
-})();
+  }
 
 (function(){
   const groups={};
