@@ -1,0 +1,560 @@
+[
+  {
+    "name": "Istanbul",
+    "year": 2016,
+    "time": "3:39",
+    "country": "TUR",
+    "major": false,
+    "lat": 41,
+    "lng": 28.9
+  },
+  {
+    "name": "Antalya",
+    "year": 2017,
+    "time": "3:34",
+    "country": "TUR",
+    "major": false,
+    "lat": 36.9,
+    "lng": 30.7
+  },
+  {
+    "name": "Paris",
+    "year": 2017,
+    "time": "3:00",
+    "country": "FRA",
+    "major": false,
+    "lat": 48.9,
+    "lng": 2.3
+  },
+  {
+    "name": "Antalya",
+    "year": 2018,
+    "time": "3:25",
+    "country": "TUR",
+    "major": false,
+    "lat": 36.9,
+    "lng": 30.7
+  },
+  {
+    "name": "Boston",
+    "year": 2018,
+    "time": "3:32",
+    "country": "USA",
+    "major": true,
+    "lat": 42.4,
+    "lng": -71.1
+  },
+  {
+    "name": "Berlin",
+    "year": 2018,
+    "time": "2:52",
+    "country": "GER",
+    "major": true,
+    "lat": 52.5,
+    "lng": 13.4
+  },
+  {
+    "name": "Mersin",
+    "year": 2018,
+    "time": "4:10",
+    "country": "TUR",
+    "major": false,
+    "lat": 36.8,
+    "lng": 34.6
+  },
+  {
+    "name": "Antalya",
+    "year": 2019,
+    "time": "2:55",
+    "country": "TUR",
+    "major": false,
+    "lat": 36.9,
+    "lng": 30.7
+  },
+  {
+    "name": "Rome",
+    "year": 2019,
+    "time": "2:55",
+    "country": "ITA",
+    "major": false,
+    "lat": 41.9,
+    "lng": 12.5
+  },
+  {
+    "name": "Stockholm",
+    "year": 2019,
+    "time": "2:57",
+    "country": "SWE",
+    "major": false,
+    "lat": 59.3,
+    "lng": 18.1
+  },
+  {
+    "name": "Chicago",
+    "year": 2019,
+    "time": "3:17",
+    "country": "USA",
+    "major": true,
+    "lat": 41.9,
+    "lng": -87.6
+  },
+  {
+    "name": "New York",
+    "year": 2019,
+    "time": "3:42",
+    "country": "USA",
+    "major": true,
+    "lat": 40.7,
+    "lng": -74
+  },
+  {
+    "name": "Antalya",
+    "year": 2020,
+    "time": "4:04",
+    "country": "TUR",
+    "major": false,
+    "lat": 36.9,
+    "lng": 30.7
+  },
+  {
+    "name": "Istanbul",
+    "year": 2021,
+    "time": "3:48",
+    "country": "TUR",
+    "major": false,
+    "lat": 41,
+    "lng": 28.9
+  },
+  {
+    "name": "Antalya",
+    "year": 2022,
+    "time": "3:38",
+    "country": "TUR",
+    "major": false,
+    "lat": 36.9,
+    "lng": 30.7
+  },
+  {
+    "name": "Izmir",
+    "year": 2022,
+    "time": "3:22",
+    "country": "TUR",
+    "major": false,
+    "lat": 38.4,
+    "lng": 27.1
+  },
+  {
+    "name": "Hamburg",
+    "year": 2022,
+    "time": "3:19",
+    "country": "GER",
+    "major": false,
+    "lat": 53.6,
+    "lng": 10
+  },
+  {
+    "name": "Prague",
+    "year": 2022,
+    "time": "3:15",
+    "country": "CZE",
+    "major": false,
+    "lat": 50.1,
+    "lng": 14.4
+  },
+  {
+    "name": "Midnight Sun",
+    "year": 2022,
+    "time": "3:23",
+    "country": "NOR",
+    "major": false,
+    "lat": 69.7,
+    "lng": 18.9
+  },
+  {
+    "name": "Aalborg Fjord",
+    "year": 2022,
+    "time": "4:12",
+    "country": "DEN",
+    "major": false,
+    "lat": 57,
+    "lng": 9.9
+  },
+  {
+    "name": "Trondheim",
+    "year": 2022,
+    "time": "3:13",
+    "country": "NOR",
+    "major": false,
+    "lat": 63.4,
+    "lng": 10.4
+  },
+  {
+    "name": "Cologne",
+    "year": 2022,
+    "time": "3:09",
+    "country": "GER",
+    "major": false,
+    "lat": 50.9,
+    "lng": 6.9
+  },
+  {
+    "name": "Amsterdam",
+    "year": 2022,
+    "time": "3:00",
+    "country": "NED",
+    "major": false,
+    "lat": 52.4,
+    "lng": 4.9
+  },
+  {
+    "name": "Lucerne",
+    "year": 2022,
+    "time": "3:23",
+    "country": "SWISS",
+    "major": false,
+    "lat": 47.1,
+    "lng": 8.3
+  },
+  {
+    "name": "Istanbul",
+    "year": 2022,
+    "time": "3:18",
+    "country": "TUR",
+    "major": false,
+    "lat": 41,
+    "lng": 28.9
+  },
+  {
+    "name": "Valencia",
+    "year": 2022,
+    "time": "2:57",
+    "country": "SPA",
+    "major": false,
+    "lat": 39.5,
+    "lng": -0.4
+  },
+  {
+    "name": "Tokyo",
+    "year": 2023,
+    "time": "2:58",
+    "country": "JAP",
+    "major": true,
+    "lat": 35.7,
+    "lng": 139.7
+  },
+  {
+    "name": "Enschede",
+    "year": 2023,
+    "time": "2:53",
+    "country": "NED",
+    "major": false,
+    "lat": 52.2,
+    "lng": 6.9
+  },
+  {
+    "name": "Thessaloniki",
+    "year": 2023,
+    "time": "2:58",
+    "country": "GRE",
+    "major": false,
+    "lat": 40.6,
+    "lng": 22.9
+  },
+  {
+    "name": "Izmir",
+    "year": 2023,
+    "time": "3:12",
+    "country": "TUR",
+    "major": false,
+    "lat": 38.4,
+    "lng": 27.1
+  },
+  {
+    "name": "Copenhagen",
+    "year": 2023,
+    "time": "2:59",
+    "country": "DEN",
+    "major": false,
+    "lat": 55.7,
+    "lng": 12.6
+  },
+  {
+    "name": "Spitsbergen",
+    "year": 2023,
+    "time": "3:11",
+    "country": "NOR",
+    "major": false,
+    "lat": 78.2,
+    "lng": 15.6
+  },
+  {
+    "name": "Münster",
+    "year": 2023,
+    "time": "3:09",
+    "country": "GER",
+    "major": false,
+    "lat": 51.9,
+    "lng": 7.6
+  },
+  {
+    "name": "Warsaw",
+    "year": 2023,
+    "time": "3:02",
+    "country": "POL",
+    "major": false,
+    "lat": 52.2,
+    "lng": 21
+  },
+  {
+    "name": "Munich",
+    "year": 2023,
+    "time": "2:59",
+    "country": "GER",
+    "major": false,
+    "lat": 48.1,
+    "lng": 11.6
+  },
+  {
+    "name": "Istanbul",
+    "year": 2023,
+    "time": "3:18",
+    "country": "TUR",
+    "major": false,
+    "lat": 41,
+    "lng": 28.9
+  },
+  {
+    "name": "Antalya",
+    "year": 2024,
+    "time": "3:02",
+    "country": "TUR",
+    "major": false,
+    "lat": 36.9,
+    "lng": 30.7
+  },
+  {
+    "name": "Brighton",
+    "year": 2024,
+    "time": "3:06",
+    "country": "UK",
+    "major": false,
+    "lat": 50.8,
+    "lng": -0.1
+  },
+  {
+    "name": "Manchester",
+    "year": 2024,
+    "time": "3:03",
+    "country": "UK",
+    "major": false,
+    "lat": 53.5,
+    "lng": -2.2
+  },
+  {
+    "name": "London",
+    "year": 2024,
+    "time": "2:53",
+    "country": "UK",
+    "major": true,
+    "lat": 51.5,
+    "lng": -0.1
+  },
+  {
+    "name": "Belgrade",
+    "year": 2024,
+    "time": "3:24",
+    "country": "SER",
+    "major": false,
+    "lat": 44.8,
+    "lng": 20.5
+  },
+  {
+    "name": "Midnight Sun",
+    "year": 2024,
+    "time": "3:03",
+    "country": "NOR",
+    "major": false,
+    "lat": 69.7,
+    "lng": 18.9
+  },
+  {
+    "name": "Reykjavik",
+    "year": 2024,
+    "time": "3:13",
+    "country": "ICE",
+    "major": false,
+    "lat": 64.1,
+    "lng": -22
+  },
+  {
+    "name": "Colmar",
+    "year": 2024,
+    "time": "3:08",
+    "country": "FRA",
+    "major": false,
+    "lat": 48.1,
+    "lng": 7.4
+  },
+  {
+    "name": "Cologne",
+    "year": 2024,
+    "time": "2:57",
+    "country": "GER",
+    "major": false,
+    "lat": 50.9,
+    "lng": 6.9
+  },
+  {
+    "name": "Frankfurt",
+    "year": 2024,
+    "time": "3:16",
+    "country": "GER",
+    "major": false,
+    "lat": 50.1,
+    "lng": 8.7
+  },
+  {
+    "name": "Athens",
+    "year": 2024,
+    "time": "3:22",
+    "country": "GRE",
+    "major": false,
+    "lat": 37.9,
+    "lng": 23.7
+  },
+  {
+    "name": "Polar Night",
+    "year": 2025,
+    "time": "4:22",
+    "country": "NOR",
+    "major": false,
+    "lat": 69.7,
+    "lng": 18.9
+  },
+  {
+    "name": "Belgrade",
+    "year": 2025,
+    "time": "3:19",
+    "country": "SER",
+    "major": false,
+    "lat": 44.8,
+    "lng": 20.5
+  },
+  {
+    "name": "Rotterdam",
+    "year": 2025,
+    "time": "3:32",
+    "country": "NED",
+    "major": false,
+    "lat": 51.9,
+    "lng": 4.5
+  },
+  {
+    "name": "Chitose",
+    "year": 2025,
+    "time": "4:16",
+    "country": "JAP",
+    "major": false,
+    "lat": 43.06,
+    "lng": 141.35
+  },
+  {
+    "name": "Odense",
+    "year": 2025,
+    "time": "3:04",
+    "country": "DEN",
+    "major": false,
+    "lat": 55.4,
+    "lng": 10.4
+  },
+  {
+    "name": "Munich",
+    "year": 2025,
+    "time": "3:13",
+    "country": "GER",
+    "major": false,
+    "lat": 48.1,
+    "lng": 11.6
+  },
+  {
+    "name": "Amsterdam",
+    "year": 2025,
+    "time": "3:07",
+    "country": "NED",
+    "major": false,
+    "lat": 52.4,
+    "lng": 4.9
+  },
+  {
+    "name": "Lucerne",
+    "year": 2025,
+    "time": "3:11",
+    "country": "SWISS",
+    "major": false,
+    "lat": 47.1,
+    "lng": 8.3
+  },
+  {
+    "name": "Valencia",
+    "year": 2025,
+    "time": "3:17",
+    "country": "SPA",
+    "major": false,
+    "lat": 39.5,
+    "lng": -0.4
+  },
+  {
+    "name": "Valletta",
+    "year": 2026,
+    "time": "3:09",
+    "country": "MLA",
+    "major": false,
+    "lat": 35.9,
+    "lng": 14.5
+  },
+  {
+    "name": "Belgrade",
+    "year": 2026,
+    "time": "3:01",
+    "country": "SER",
+    "major": false,
+    "lat": 44.8,
+    "lng": 20.5
+  },
+  {
+    "name": "Bergen",
+    "year": 2026,
+    "time": "3:33",
+    "country": "NOR",
+    "major": false,
+    "lat": 60.4,
+    "lng": 5.3
+  },
+  {
+    "name": "Copenhagen",
+    "year": 2026,
+    "time": "3:05",
+    "country": "DEN",
+    "major": false,
+    "lat": 55.7,
+    "lng": 12.6
+  },
+  {
+    "name": "Beer Lovers",
+    "year": 2026,
+    "time": "3:26",
+    "country": "BEL",
+    "major": false,
+    "lat": 50.6,
+    "lng": 5.6
+  },
+  {
+    "name": "Stockholm",
+    "year": 2026,
+    "time": "3:44",
+    "country": "SWE",
+    "major": false,
+    "lat": 59.3,
+    "lng": 18.1
+  }
+]

@@ -1,0 +1,122 @@
+[
+  {
+    "code": "TUR",
+    "name": "Turkey",
+    "lat": 39,
+    "lng": 35
+  },
+  {
+    "code": "GER",
+    "name": "Germany",
+    "lat": 51.2,
+    "lng": 10.4
+  },
+  {
+    "code": "NOR",
+    "name": "Norway",
+    "lat": 60.5,
+    "lng": 8.5
+  },
+  {
+    "code": "NED",
+    "name": "Netherlands",
+    "lat": 52.4,
+    "lng": 5.3
+  },
+  {
+    "code": "DEN",
+    "name": "Denmark",
+    "lat": 56,
+    "lng": 9.5
+  },
+  {
+    "code": "USA",
+    "name": "USA",
+    "lat": 38,
+    "lng": -97
+  },
+  {
+    "code": "UK",
+    "name": "UK",
+    "lat": 54,
+    "lng": -2
+  },
+  {
+    "code": "SER",
+    "name": "Serbia",
+    "lat": 44,
+    "lng": 21
+  },
+  {
+    "code": "FRA",
+    "name": "France",
+    "lat": 46.2,
+    "lng": 2.2
+  },
+  {
+    "code": "GRE",
+    "name": "Greece",
+    "lat": 39.1,
+    "lng": 22
+  },
+  {
+    "code": "JAP",
+    "name": "Japan",
+    "lat": 36.2,
+    "lng": 138
+  },
+  {
+    "code": "SWISS",
+    "name": "Switzerland",
+    "lat": 46.8,
+    "lng": 8.2
+  },
+  {
+    "code": "SPA",
+    "name": "Spain",
+    "lat": 40.4,
+    "lng": -3.7
+  },
+  {
+    "code": "SWE",
+    "name": "Sweden",
+    "lat": 60.1,
+    "lng": 18.6
+  },
+  {
+    "code": "CZE",
+    "name": "Czech Rep.",
+    "lat": 49.8,
+    "lng": 15.5
+  },
+  {
+    "code": "ITA",
+    "name": "Italy",
+    "lat": 42.8,
+    "lng": 12.8
+  },
+  {
+    "code": "POL",
+    "name": "Poland",
+    "lat": 52.1,
+    "lng": 19.4
+  },
+  {
+    "code": "ICE",
+    "name": "Iceland",
+    "lat": 64.5,
+    "lng": -18
+  },
+  {
+    "code": "MLA",
+    "name": "Malta",
+    "lat": 35.9,
+    "lng": 14.4
+  },
+  {
+    "code": "BEL",
+    "name": "Belgium",
+    "lat": 50.6,
+    "lng": 5.6
+  }
+]

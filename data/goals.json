@@ -1,0 +1,47 @@
+{
+  "targetMarathonMinutes": 170,
+  "targets": [
+    {
+      "id": "marathons-100",
+      "label": "100 Marathons",
+      "type": "count",
+      "metric": "marathons",
+      "target": 100
+    },
+    {
+      "id": "sub3-50",
+      "label": "50 Sub-3 Finishes",
+      "type": "count",
+      "metric": "sub3",
+      "target": 50
+    },
+    {
+      "id": "countries-25",
+      "label": "25 Countries",
+      "type": "count",
+      "metric": "countries",
+      "target": 25
+    },
+    {
+      "id": "pb-250",
+      "label": "Sub-2:50 Marathon",
+      "type": "pb",
+      "metric": "marathon_pb",
+      "target": 170
+    },
+    {
+      "id": "training-40k",
+      "label": "40,000 km Lifetime",
+      "type": "count",
+      "metric": "training_km",
+      "target": 40000
+    },
+    {
+      "id": "majors",
+      "label": "All 6 World Majors",
+      "type": "boolean",
+      "metric": "majors_complete",
+      "target": 6
+    }
+  ]
+}

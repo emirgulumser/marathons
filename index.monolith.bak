@@ -1,0 +1,2746 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marathon & Running Log</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    /* ── THEME VARIABLES ─────────────────────────────── */
+    [data-theme="dark"] {
+      --bg:       #0d1117;
+      --bg2:      #0a0d14;
+      --card:     #161b22;
+      --card2:    #1f2937;
+      --border:   #30363d;
+      --text:     #e6edf3;
+      --muted:    #8b949e;
+      --map-tile: dark;
+    }
+    [data-theme="light"] {
+      --bg:       #f0f4f8;
+      --bg2:      #e8edf3;
+      --card:     #ffffff;
+      --card2:    #f3f6fa;
+      --border:   #d0d7de;
+      --text:     #1c2128;
+      --muted:    #656d76;
+      --map-tile: light;
+    }
+
+    /* ── RESET & BASE ────────────────────────────────── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      padding-bottom: 80px;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    /* ── HEADER ──────────────────────────────────────── */
+    header {
+      background: linear-gradient(135deg, #1a0a2e 0%, #0d1117 60%, #0a1628 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 36px 24px 28px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    [data-theme="light"] header { background: linear-gradient(135deg, #3b1f6e 0%, #1e3a5f 100%); }
+    header::before {
+      content: '';
+      position: absolute; top: -80px; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 300px;
+      background: radial-gradient(ellipse, rgba(249,115,22,0.14) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .header-inner { position: relative; z-index: 1; }
+    header h1 {
+      font-size: 2.6rem; font-weight: 800; letter-spacing: -1px;
+      background: linear-gradient(135deg, #f97316, #fbbf24);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    header p { color: rgba(255,255,255,0.6); margin-top: 6px; font-size: 1rem; }
+    .majors-badge {
+      display: inline-flex; align-items: center; gap: 8px; margin-top: 14px;
+      background: linear-gradient(135deg, rgba(251,191,36,0.15), rgba(249,115,22,0.15));
+      border: 1px solid rgba(251,191,36,0.4); border-radius: 50px;
+      padding: 7px 20px; font-size: 0.88rem; font-weight: 600; color: #fbbf24;
+    }
+
+    /* ── THEME TOGGLE ────────────────────────────────── */
+    .theme-toggle {
+      position: absolute; top: 20px; right: 24px; z-index: 10;
+      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 50px; padding: 7px 16px; cursor: pointer;
+      font-size: 0.85rem; color: #fff; display: flex; align-items: center; gap: 6px;
+      transition: background 0.2s;
+    }
+    .theme-toggle:hover { background: rgba(255,255,255,0.2); }
+
+    /* ── LAYOUT ──────────────────────────────────────── */
+    .container { max-width: 1400px; margin: 0 auto; padding: 0 24px; }
+    .section { margin-bottom: 28px; }
+    .section-title {
+      font-size: 1.05rem; font-weight: 700; color: var(--text); margin-bottom: 14px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .three-col { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+    @media (max-width: 900px) {
+      .two-col, .three-col { grid-template-columns: 1fr; }
+      header h1 { font-size: 1.8rem; }
+      .stats-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 500px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* ── CHART CARD ──────────────────────────────────── */
+    .chart-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 22px;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .chart-card-title {
+      font-size: 0.85rem; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px;
+    }
+
+    /* ── STATS GRID ──────────────────────────────────── */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 28px 0;
+    }
+    @media (max-width: 1100px) { .stats-grid { grid-template-columns: repeat(3, 1fr); } }
+    .stat-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      padding: 20px 18px; text-align: center;
+      transition: transform 0.2s, border-color 0.2s, background 0.3s;
+    }
+    .stat-card:hover { transform: translateY(-2px); }
+    .stat-icon { font-size: 1.4rem; margin-bottom: 6px; }
+    .stat-value { font-size: 1.9rem; font-weight: 800; line-height: 1; }
+    .stat-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-top: 5px; }
+    .stat-card.c-orange { border-top: 3px solid #f97316; } .stat-card.c-orange .stat-value { color: #f97316; }
+    .stat-card.c-gold   { border-top: 3px solid #fbbf24; } .stat-card.c-gold   .stat-value { color: #fbbf24; }
+    .stat-card.c-green  { border-top: 3px solid #22c55e; } .stat-card.c-green  .stat-value { color: #22c55e; }
+    .stat-card.c-blue   { border-top: 3px solid #3b82f6; } .stat-card.c-blue   .stat-value { color: #3b82f6; }
+    .stat-card.c-purple { border-top: 3px solid #a78bfa; } .stat-card.c-purple .stat-value { color: #a78bfa; }
+    .stat-card.c-red    { border-top: 3px solid #ef4444; } .stat-card.c-red    .stat-value { color: #ef4444; }
+    .stat-card.c-teal   { border-top: 3px solid #14b8a6; } .stat-card.c-teal   .stat-value { color: #14b8a6; }
+    .stat-card.c-pink   { border-top: 3px solid #ec4899; } .stat-card.c-pink   .stat-value { color: #ec4899; }
+
+    /* ── CHART LEGEND ────────────────────────────────── */
+    .chart-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 14px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; color: var(--muted); }
+    .legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .legend-line { width: 18px; height: 2px; flex-shrink: 0; }
+
+    /* ── COMPARISON CARDS ────────────────────────────── */
+    .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .compare-card {
+      background: var(--card2); border: 1px solid var(--border); border-radius: 12px; padding: 18px;
+    }
+    .compare-card h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 14px; }
+    .compare-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); }
+    .compare-row:last-child { border-bottom: none; }
+    .compare-label { font-size: 0.8rem; color: var(--muted); }
+    .compare-val { font-weight: 700; font-size: 0.95rem; }
+
+    /* ── PASSPORT GRID ───────────────────────────────── */
+    .passport-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+    .passport-item {
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      background: var(--card2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 12px 14px; min-width: 72px; cursor: default;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .passport-item:hover { transform: translateY(-3px); border-color: #f97316; }
+    .passport-flag {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 30px;
+    }
+    .flag-img {
+      display: inline-block;
+      vertical-align: middle;
+      border-radius: 2px;
+      object-fit: contain;
+      box-shadow: 0 0 0 1px rgba(128, 128, 128, 0.28);
+    }
+    .cell-flag-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      vertical-align: middle;
+      max-width: 100%;
+    }
+    .cell-flag-label .flag-img { flex-shrink: 0; }
+    .heatmap-table th .flag-img { display: block; margin: 0 auto; }
+    .passport-flag .flag-img { width: 40px; height: auto; max-height: 30px; object-fit: contain; }
+    .passport-name { font-size: 0.65rem; color: var(--muted); text-align: center; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+    .passport-count {
+      font-size: 0.85rem; font-weight: 800; color: #f97316;
+      background: rgba(249,115,22,0.12); border-radius: 20px; padding: 1px 8px;
+    }
+
+    /* ── HEATMAP ─────────────────────────────────────── */
+    .heatmap-scroll { overflow-x: auto; }
+    .heatmap-table { border-collapse: collapse; font-size: 0.8rem; }
+    .heatmap-table th {
+      padding: 4px 8px; color: var(--muted); font-size: 0.75rem; text-align: center; font-weight: 600;
+    }
+    .heatmap-table th.year-head { text-align: left; padding-right: 16px; }
+    .heatmap-table td.year-label { padding: 5px 16px 5px 0; color: var(--muted); font-weight: 700; font-size: 0.8rem; white-space: nowrap; }
+    .heat-cell {
+      width: 38px; height: 32px; text-align: center; vertical-align: middle;
+      border-radius: 5px; font-weight: 700; font-size: 0.75rem; border: 1px solid transparent;
+      cursor: default; transition: transform 0.1s;
+    }
+    .heat-cell:hover { transform: scale(1.15); border-color: rgba(255,255,255,0.3); }
+    .heat-cell.empty { background: rgba(48,54,61,0.25) !important; color: transparent; }
+
+    /* ── TOP TIMES ───────────────────────────────────── */
+    .podium-list { display: flex; flex-direction: column; gap: 7px; }
+    .podium-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 14px; background: var(--card2); border: 1px solid var(--border);
+      border-radius: 10px; cursor: pointer; transition: border-color 0.15s;
+    }
+    .podium-item:hover { border-color: #f97316; }
+    .podium-rank {
+      width: 26px; height: 26px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 0.75rem; flex-shrink: 0;
+    }
+    .r1 { background: linear-gradient(135deg,#fbbf24,#f97316); color:#000; }
+    .r2 { background: linear-gradient(135deg,#94a3b8,#64748b); color:#fff; }
+    .r3 { background: linear-gradient(135deg,#cd7c2f,#a05c1d); color:#fff; }
+    .rN { background: var(--border); color: var(--muted); }
+    .podium-name { flex: 1; font-weight: 600; font-size: 0.85rem; }
+    .podium-year { color: var(--muted); font-size: 0.78rem; }
+    .podium-time { font-weight: 800; font-variant-numeric: tabular-nums; font-size: 0.92rem; }
+
+    /* ── RACE TABLE ──────────────────────────────────── */
+    .table-controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+    .search-input {
+      background: var(--card2); border: 1px solid var(--border); border-radius: 8px;
+      padding: 7px 14px; color: var(--text); font-size: 0.85rem; width: 200px;
+      outline: none; transition: border-color 0.15s;
+    }
+    .search-input:focus { border-color: #f97316; }
+    .search-input::placeholder { color: var(--muted); }
+    .filter-bar { display: flex; gap: 6px; flex-wrap: wrap; }
+    .filter-btn {
+      padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border);
+      background: transparent; color: var(--muted); font-size: 0.78rem; cursor: pointer;
+      transition: all 0.15s; white-space: nowrap;
+    }
+    .filter-btn:hover, .filter-btn.active {
+      background: #f97316; border-color: #f97316; color: #fff;
+    }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th {
+      text-align: left; padding: 9px 14px; color: var(--muted);
+      font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em;
+      border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; white-space: nowrap;
+    }
+    th:hover { color: var(--text); }
+    td { padding: 9px 14px; border-bottom: 1px solid rgba(48,54,61,0.4); }
+    [data-theme="light"] td { border-bottom: 1px solid rgba(208,215,222,0.6); }
+    tr { cursor: pointer; }
+    tr:hover td { background: rgba(249,115,22,0.05); }
+    tr:last-child td { border-bottom: none; }
+    .time-cell { font-weight: 700; font-variant-numeric: tabular-nums; }
+    .sub3  { color: #22c55e; }
+    .fast  { color: #86efac; }
+    .tough { color: #ef4444; }
+    .major-badge {
+      display: inline-flex; align-items: center; gap: 3px;
+      background: rgba(251,191,36,0.15); border: 1px solid rgba(251,191,36,0.3);
+      border-radius: 4px; padding: 1px 5px; font-size: 0.68rem; color: #fbbf24; font-weight: 700;
+    }
+
+    /* ── MODAL ───────────────────────────────────────── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 1000;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 20px;
+      padding: 32px; max-width: 420px; width: 90%; position: relative;
+      animation: slideUp 0.2s ease;
+    }
+    @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .modal-close {
+      position: absolute; top: 16px; right: 16px;
+      background: var(--card2); border: 1px solid var(--border); border-radius: 50%;
+      width: 30px; height: 30px; cursor: pointer; color: var(--muted);
+      font-size: 0.9rem; display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s;
+    }
+    .modal-close:hover { background: var(--border); color: var(--text); }
+    .modal-flag {
+      min-height: 52px; margin-bottom: 4px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .modal-flag .flag-img { width: 56px; height: auto; max-height: 44px; object-fit: contain; }
+    .modal-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 4px; }
+    .modal-subtitle { color: var(--muted); font-size: 0.88rem; margin-bottom: 16px; }
+    .modal-time { font-size: 3rem; font-weight: 900; line-height: 1; margin: 16px 0; font-variant-numeric: tabular-nums; }
+    .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
+    .modal-stat-box {
+      background: var(--card2); border-radius: 10px; padding: 12px;
+      border: 1px solid var(--border);
+    }
+    .modal-stat-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+    .modal-stat-val { font-size: 1.1rem; font-weight: 700; }
+
+    /* ── MAP ─────────────────────────────────────────── */
+    #worldMap { height: 420px; border-radius: 12px; z-index: 1; }
+    .leaflet-popup-content-wrapper {
+      background: var(--card) !important; border: 1px solid var(--border) !important;
+      border-radius: 10px !important; box-shadow: 0 8px 32px rgba(0,0,0,0.4) !important;
+    }
+    .leaflet-popup-tip { background: var(--card) !important; }
+    .leaflet-popup-content { color: var(--text) !important; margin: 12px 16px !important; }
+    .map-popup-title {
+      font-weight: 700; font-size: 1rem; margin-bottom: 4px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .map-popup-title .flag-img { flex-shrink: 0; }
+    .map-popup-count { color: #f97316; font-weight: 600; }
+
+    /* ── CONTINENT CARD ──────────────────────────────── */
+    .continent-card {
+      display: flex;
+      align-items: center;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+    .continent-donut {
+      position: relative;
+      width: 260px;
+      height: 260px;
+      flex-shrink: 0;
+    }
+    .continent-donut canvas {
+      width: 260px !important;
+      height: 260px !important;
+    }
+    .continent-legend {
+      flex: 1;
+      min-width: 220px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    @media (max-width: 640px) {
+      .continent-card { justify-content: center; }
+      .continent-donut { margin: 0 auto; }
+      .continent-legend { width: 100%; }
+    }
+
+    /* ── TRAIL SECTION ───────────────────────────────── */
+    .trail-divider {
+      text-align: center; margin: 48px 0 20px;
+      position: relative;
+    }
+    .trail-divider::before {
+      content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, #22c55e66, transparent);
+    }
+    .trail-divider span {
+      position: relative; z-index: 1;
+      background: var(--bg); padding: 0 20px;
+      font-size: 1.4rem; font-weight: 800; color: #22c55e;
+      letter-spacing: -0.5px;
+    }
+    .trail-intro {
+      text-align: center; color: var(--muted); font-size: 0.88rem;
+      max-width: 560px; margin: 0 auto 24px; line-height: 1.6;
+    }
+    .trail-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+    }
+    .trail-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      padding: 18px 20px; position: relative; overflow: hidden;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .trail-card:hover { transform: translateY(-2px); border-color: #22c55e66; }
+    .trail-card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, #22c55e, #86efac);
+    }
+    .trail-card.podium::before { background: linear-gradient(90deg, #fbbf24, #f97316); }
+    .trail-card-name { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+    .trail-card-meta { font-size: 0.78rem; color: var(--muted); margin-bottom: 12px; }
+    .trail-card-stats { display: flex; gap: 14px; flex-wrap: wrap; }
+    .trail-stat { display: flex; flex-direction: column; gap: 2px; }
+    .trail-stat-label { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .trail-stat-val { font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .podium-ribbon {
+      position: absolute; top: 14px; right: 14px;
+      background: linear-gradient(135deg,#fbbf24,#f97316);
+      color: #000; font-size: 0.7rem; font-weight: 800;
+      padding: 3px 9px; border-radius: 20px;
+    }
+
+    /* ── TABS ────────────────────────────────────────── */
+    .tab-nav {
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 200;
+      padding: 0 24px;
+      display: flex; justify-content: center;
+      transition: background 0.3s;
+    }
+    .tab-bar {
+      display: flex; gap: 4px; padding: 10px 0;
+      max-width: 1400px; width: 100%;
+    }
+    .tab-btn {
+      padding: 8px 28px; border-radius: 8px;
+      border: 1px solid transparent;
+      background: transparent; color: var(--muted);
+      font-size: 0.9rem; font-weight: 600; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tab-btn:hover { color: var(--text); background: var(--card); border-color: var(--border); }
+    .tab-btn.active { color: #f97316; background: var(--card); border-color: #f97316; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ── FOOTER ──────────────────────────────────────── */
+    footer {
+      text-align: center; color: var(--muted); font-size: 0.8rem;
+      margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
+  <div class="header-inner">
+    <h1>Marathon & Running Log</h1>
+    <p>62 marathons · 20 countries · 35,903 km · 6 World Majors</p>
+  </div>
+</header>
+
+<nav class="tab-nav">
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="marathons" onclick="switchTab('marathons')">🏅 Marathons</button>
+    <button class="tab-btn" data-tab="half" onclick="switchTab('half')">½ Half Marathon</button>
+    <button class="tab-btn" data-tab="trail" onclick="switchTab('trail')">⛰️ Trail</button>
+    <button class="tab-btn" data-tab="training" onclick="switchTab('training')">📈 Training</button>
+  </div>
+</nav>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal-card" id="modalCard">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<div class="container">
+
+<div id="tab-marathons" class="tab-content active">
+
+  <!-- STATS -->
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card c-orange"><div class="stat-icon">🏅</div><div class="stat-value">62</div><div class="stat-label">Total Marathons</div></div>
+    <div class="stat-card c-blue"><div class="stat-icon">🌍</div><div class="stat-value">20</div><div class="stat-label">Countries</div></div>
+    <div class="stat-card c-gold"><div class="stat-icon">⚡</div><div class="stat-value">2:52</div><div class="stat-label">Personal Best</div></div>
+    <div class="stat-card c-green"><div class="stat-icon">🟢</div><div class="stat-value" id="sSub3">—</div><div class="stat-label">Sub-3:00 Finishes</div></div>
+    <div class="stat-card c-purple"><div class="stat-icon">⭐</div><div class="stat-value">6</div><div class="stat-label">World Majors</div></div>
+    <div class="stat-card c-teal"><div class="stat-icon">📏</div><div class="stat-value" id="sKm">—</div><div class="stat-label">Total Kilometres</div></div>
+    <div class="stat-card c-pink"><div class="stat-icon">⏱️</div><div class="stat-value" id="sTime">—</div><div class="stat-label">Total Time on Feet</div></div>
+    <div class="stat-card c-red"><div class="stat-icon">📊</div><div class="stat-value" id="sAvg">—</div><div class="stat-label">All-Race Average</div></div>
+  </div>
+
+  <!-- PROGRESS TIMELINE -->
+  <div class="section">
+    <div class="section-title">Performance Timeline — all 62 races</div>
+    <div class="chart-card">
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div> PB set</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#a78bfa"></div> World Major</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div> Sub 3:00</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div> Regular</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div> 4:00+</div>
+        <div class="legend-item"><div class="legend-line" style="background:#f97316;border-top:2px dashed #f97316"></div> Rolling avg</div>
+        <div class="legend-item"><div class="legend-line" style="background:#fbbf24;border-top:1px dashed #fbbf24"></div> 2:50 target</div>
+      </div>
+      <div style="position:relative;height:340px"><canvas id="progressChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- PB PROGRESSION + DISTRIBUTION -->
+  <div class="section two-col">
+    <div>
+      <div class="section-title">Personal Best Progression</div>
+      <div class="chart-card">
+        <div style="position:relative;height:280px"><canvas id="pbChart"></canvas></div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Finish Time Distribution</div>
+      <div class="chart-card">
+        <div style="position:relative;height:280px"><canvas id="distChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COUNTRY + YEAR -->
+  <div class="section two-col">
+    <div>
+      <div class="section-title">Races by Country <span style="font-weight:400;color:var(--muted);font-size:0.8rem">— click to filter table</span></div>
+      <div class="chart-card">
+        <div style="position:relative;height:420px"><canvas id="countryChart"></canvas></div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Races per Year</div>
+      <div class="chart-card">
+        <div style="position:relative;height:420px"><canvas id="yearChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTINENTS -->
+  <div class="section">
+    <div class="section-title">Races by Continent</div>
+    <div class="chart-card continent-card">
+      <div class="continent-donut">
+        <canvas id="continentChart"></canvas>
+      </div>
+      <div id="continentLegend" class="continent-legend"></div>
+    </div>
+  </div>
+
+  <!-- LATITUDE CHARTS -->
+  <div class="section two-col">
+    <div>
+      <div class="section-title">Race Latitude over Time</div>
+      <div class="chart-card">
+        <div style="position:relative;height:340px"><canvas id="latTimeChart"></canvas></div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Latitude vs Finish Time</div>
+      <div class="chart-card">
+        <div style="position:relative;height:340px"><canvas id="latTimeChart2"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORLD MAP -->
+  <div class="section">
+    <div class="section-title">Interactive World Map</div>
+    <div class="chart-card" style="padding:16px">
+      <div id="worldMap"></div>
+    </div>
+  </div>
+
+  <!-- BEST PER YEAR + MAJORS VS REGULAR -->
+  <div class="section two-col">
+    <div>
+      <div class="section-title">Best Time per Year</div>
+      <div class="chart-card">
+        <div style="position:relative;height:300px"><canvas id="bestYearChart"></canvas></div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Majors vs Regular Races</div>
+      <div class="chart-card">
+        <div class="compare-grid" id="compareGrid"></div>
+        <div style="position:relative;height:180px;margin-top:16px"><canvas id="compareChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAJORS TIMELINE -->
+  <div class="section">
+    <div class="section-title">World Majors Completion Timeline</div>
+    <div class="chart-card" id="majorsTimeline"></div>
+  </div>
+
+  <!-- FLAG PASSPORT -->
+  <div class="section">
+    <div class="section-title">Country Passport — 19 nations</div>
+    <div class="chart-card">
+      <div class="passport-grid" id="passportGrid"></div>
+    </div>
+  </div>
+
+  <!-- YEAR × COUNTRY HEATMAP -->
+  <div class="section">
+    <div class="section-title">Year × Country Heatmap</div>
+    <div class="chart-card">
+      <div class="heatmap-scroll" id="heatmapContainer"></div>
+    </div>
+  </div>
+
+  <!-- TOP 10 + AVG BY YEAR -->
+  <div class="section two-col">
+    <div>
+      <div class="section-title">Top 10 Fastest Finishes</div>
+      <div class="chart-card">
+        <div class="podium-list" id="topTimes"></div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Average Finish Time per Year</div>
+      <div class="chart-card">
+        <div style="position:relative;height:380px"><canvas id="avgYearChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONSISTENCY + LONGITUDE -->
+  <div class="section two-col">
+    <div>
+      <div class="section-title">Consistency Score per Year <span style="font-weight:400;color:var(--muted);font-size:0.8rem">— lower = more consistent</span></div>
+      <div class="chart-card">
+        <div style="position:relative;height:280px"><canvas id="consistencyChart"></canvas></div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Race Longitude over Time</div>
+      <div class="chart-card">
+        <div style="position:relative;height:280px"><canvas id="lngChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DISTANCE FROM HOME -->
+  <div class="section">
+    <div class="section-title">Latitude Distance from Home — unique cities</div>
+    <div class="chart-card">
+      <div style="position:relative;height:1100px"><canvas id="distanceChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- ALL RACES TABLE -->
+  <div class="section">
+    <div class="section-title">All Races</div>
+    <div class="chart-card">
+      <div class="table-controls">
+        <input class="search-input" id="searchInput" type="text" placeholder="Search race or country…">
+        <div class="filter-bar" id="filterBar">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="major">⭐ Majors</button>
+          <button class="filter-btn" data-filter="sub3">Sub 3:00</button>
+          <button class="filter-btn" data-filter="2016">2016</button>
+          <button class="filter-btn" data-filter="2017">2017</button>
+          <button class="filter-btn" data-filter="2018">2018</button>
+          <button class="filter-btn" data-filter="2019">2019</button>
+          <button class="filter-btn" data-filter="2020">2020</button>
+          <button class="filter-btn" data-filter="2021">2021</button>
+          <button class="filter-btn" data-filter="2022">2022</button>
+          <button class="filter-btn" data-filter="2023">2023</button>
+          <button class="filter-btn" data-filter="2024">2024</button>
+          <button class="filter-btn" data-filter="2025">2025</button>
+          <button class="filter-btn" data-filter="2026">2026</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th data-col="idx">#</th>
+              <th data-col="name">Race</th>
+              <th data-col="year">Year</th>
+              <th data-col="country">Country</th>
+              <th data-col="time">Time</th>
+              <th data-col="rank">Rank</th>
+            </tr>
+          </thead>
+          <tbody id="racesBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /tab-marathons -->
+
+<div id="tab-training" class="tab-content">
+
+  <!-- ══════════════════════════════════════════════════
+       ANNUAL TRAINING LOG
+  ══════════════════════════════════════════════════ -->
+
+  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px" id="trainStats"></div>
+
+  <div class="section two-col">
+    <div>
+      <div class="section-title">Kilometres &amp; Runs per Year</div>
+      <div class="chart-card">
+        <div style="position:relative;height:320px"><canvas id="trainKmChart"></canvas></div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Average Run Distance per Year</div>
+      <div class="chart-card">
+        <div style="position:relative;height:320px"><canvas id="trainAvgChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Cumulative Kilometres — all-time total</div>
+    <div class="chart-card">
+      <div style="position:relative;height:240px"><canvas id="trainCumChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- TRAINING VS PERFORMANCE + RACES VS KM -->
+  <div class="section two-col">
+    <div>
+      <div class="section-title">Training Volume vs Best Marathon Time</div>
+      <div class="chart-card">
+        <div style="position:relative;height:280px"><canvas id="volPerfChart"></canvas></div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Marathons Run vs Annual km</div>
+      <div class="chart-card">
+        <div style="position:relative;height:280px"><canvas id="racesKmChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /tab-training -->
+
+<div id="tab-trail" class="tab-content">
+
+  <div class="trail-intro">
+    Mountain &amp; ultra trail adventures — distances and terrain vary wildly, so these are kept completely separate from road marathon data.
+  </div>
+
+  <!-- Trail Stats -->
+  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px" id="trailStats"></div>
+
+  <!-- Trail Chart + Cards -->
+  <div class="section two-col">
+    <div>
+      <div class="section-title">Distance vs Finish Time</div>
+      <div class="chart-card">
+        <div style="position:relative;height:320px"><canvas id="trailChart"></canvas></div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Pace per km by Race</div>
+      <div class="chart-card">
+        <div style="position:relative;height:320px"><canvas id="trailPaceChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trail Race Cards -->
+  <div class="section">
+    <div class="section-title">Trail Race Log</div>
+    <div class="trail-cards" id="trailCards"></div>
+  </div>
+
+</div><!-- /tab-trail -->
+
+<div id="tab-half" class="tab-content">
+
+  <!-- HALF MARATHON STATS -->
+  <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:24px" id="halfStats"></div>
+
+  <!-- CITY BAR + COUNTRY BREAKDOWN -->
+  <div class="section two-col">
+    <div>
+      <div class="section-title">Races by City</div>
+      <div class="chart-card">
+        <div style="position:relative;height:300px"><canvas id="halfCityChart"></canvas></div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Races by Country</div>
+      <div class="chart-card">
+        <div style="position:relative;height:300px"><canvas id="halfCountryChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORLD MAP -->
+  <div class="section">
+    <div class="section-title">Race Locations</div>
+    <div class="chart-card">
+      <div id="halfMap" style="height:340px;border-radius:10px;overflow:hidden"></div>
+    </div>
+  </div>
+
+  <!-- LATITUDE + DISTANCE ROW -->
+  <div class="section two-col">
+    <div>
+      <div class="section-title">City Latitude</div>
+      <div class="chart-card">
+        <div style="position:relative;height:300px"><canvas id="halfLatChart"></canvas></div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">Distance from Home</div>
+      <div class="chart-card">
+        <div style="position:relative;height:300px"><canvas id="halfDistChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTINENT BREAKDOWN -->
+  <div class="section">
+    <div class="section-title">Continent Breakdown</div>
+    <div class="chart-card">
+      <div class="continent-card">
+        <div class="continent-donut">
+          <canvas id="halfContChart"></canvas>
+        </div>
+        <div class="continent-legend" id="halfContLegend"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CITY PASSPORT CARDS -->
+  <div class="section">
+    <div class="section-title">City Passport</div>
+    <div class="chart-card">
+      <div class="passport-grid" id="halfPassport"></div>
+    </div>
+  </div>
+
+</div><!-- /tab-half -->
+
+  <footer>
+    🏅 62 Marathons &nbsp;·&nbsp; ⛰️ 7 Trail Races &nbsp;·&nbsp; 🌍 20 Countries &nbsp;·&nbsp; 📏 35,903 km total
+  </footer>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   DATA
+═══════════════════════════════════════════════════════ */
+const races = [
+  { name:"Istanbul",      year:2016, time:"3:39", country:"TUR", major:false },
+  { name:"Antalya",       year:2017, time:"3:34", country:"TUR", major:false },
+  { name:"Paris",         year:2017, time:"3:00", country:"FRA", major:false },
+  { name:"Antalya",       year:2018, time:"3:25", country:"TUR", major:false },
+  { name:"Boston",        year:2018, time:"3:32", country:"USA", major:true  },
+  { name:"Berlin",        year:2018, time:"2:52", country:"GER", major:true  },
+  { name:"Mersin",        year:2018, time:"4:10", country:"TUR", major:false },
+  { name:"Antalya",       year:2019, time:"2:55", country:"TUR", major:false },
+  { name:"Rome",          year:2019, time:"2:55", country:"ITA", major:false },
+  { name:"Stockholm",     year:2019, time:"2:57", country:"SWE", major:false },
+  { name:"Chicago",       year:2019, time:"3:17", country:"USA", major:true  },
+  { name:"New York",      year:2019, time:"3:42", country:"USA", major:true  },
+  { name:"Antalya",       year:2020, time:"4:04", country:"TUR", major:false },
+  { name:"Istanbul",      year:2021, time:"3:48", country:"TUR", major:false },
+  { name:"Antalya",       year:2022, time:"3:38", country:"TUR", major:false },
+  { name:"Izmir",         year:2022, time:"3:22", country:"TUR", major:false },
+  { name:"Hamburg",       year:2022, time:"3:19", country:"GER", major:false },
+  { name:"Prague",        year:2022, time:"3:15", country:"CZE", major:false },
+  { name:"Midnight Sun",  year:2022, time:"3:23", country:"NOR", major:false },
+  { name:"Aalborg Fjord", year:2022, time:"4:12", country:"DEN", major:false },
+  { name:"Trondheim",     year:2022, time:"3:13", country:"NOR", major:false },
+  { name:"Cologne",       year:2022, time:"3:09", country:"GER", major:false },
+  { name:"Amsterdam",     year:2022, time:"3:00", country:"NED", major:false },
+  { name:"Lucerne",       year:2022, time:"3:23", country:"SWISS", major:false },
+  { name:"Istanbul",      year:2022, time:"3:18", country:"TUR", major:false },
+  { name:"Valencia",      year:2022, time:"2:57", country:"SPA", major:false },
+  { name:"Tokyo",         year:2023, time:"2:58", country:"JAP", major:true  },
+  { name:"Enschede",      year:2023, time:"2:53", country:"NED", major:false },
+  { name:"Thessaloniki",  year:2023, time:"2:58", country:"GRE", major:false },
+  { name:"Izmir",         year:2023, time:"3:12", country:"TUR", major:false },
+  { name:"Copenhagen",    year:2023, time:"2:59", country:"DEN", major:false },
+  { name:"Spitsbergen",   year:2023, time:"3:11", country:"NOR", major:false },
+  { name:"Münster",       year:2023, time:"3:09", country:"GER", major:false },
+  { name:"Warsaw",        year:2023, time:"3:02", country:"POL", major:false },
+  { name:"Munich",        year:2023, time:"2:59", country:"GER", major:false },
+  { name:"Istanbul",      year:2023, time:"3:18", country:"TUR", major:false },
+  { name:"Antalya",       year:2024, time:"3:02", country:"TUR", major:false },
+  { name:"Brighton",      year:2024, time:"3:06", country:"UK",  major:false },
+  { name:"Manchester",    year:2024, time:"3:03", country:"UK",  major:false },
+  { name:"London",        year:2024, time:"2:53", country:"UK",  major:true  },
+  { name:"Belgrade",      year:2024, time:"3:24", country:"SER", major:false },
+  { name:"Midnight Sun",  year:2024, time:"3:03", country:"NOR", major:false },
+  { name:"Reykjavik",     year:2024, time:"3:13", country:"ICE", major:false },
+  { name:"Colmar",        year:2024, time:"3:08", country:"FRA", major:false },
+  { name:"Cologne",       year:2024, time:"2:57", country:"GER", major:false },
+  { name:"Frankfurt",     year:2024, time:"3:16", country:"GER", major:false },
+  { name:"Athens",        year:2024, time:"3:22", country:"GRE", major:false },
+  { name:"Polar Night",   year:2025, time:"4:22", country:"NOR", major:false },
+  { name:"Belgrade",      year:2025, time:"3:19", country:"SER", major:false },
+  { name:"Rotterdam",     year:2025, time:"3:32", country:"NED", major:false },
+  { name:"Chitose",       year:2025, time:"4:16", country:"JAP", major:false },
+  { name:"Odense",        year:2025, time:"3:04", country:"DEN", major:false },
+  { name:"Munich",        year:2025, time:"3:13", country:"GER", major:false },
+  { name:"Amsterdam",     year:2025, time:"3:07", country:"NED", major:false },
+  { name:"Lucerne",       year:2025, time:"3:11", country:"SWISS", major:false },
+  { name:"Valencia",      year:2025, time:"3:17", country:"SPA", major:false },
+  { name:"Valletta",      year:2026, time:"3:09", country:"MLA", major:false },
+  { name:"Belgrade",      year:2026, time:"3:01", country:"SER", major:false },
+  { name:"Bergen",        year:2026, time:"3:33", country:"NOR", major:false },
+  { name:"Copenhagen",    year:2026, time:"3:05", country:"DEN", major:false },
+  { name:"Beer Lovers",   year:2026, time:"3:26", country:"BEL", major:false },
+  { name:"Stockholm",     year:2026, time:"3:44", country:"SWE", major:false },
+];
+
+const countryData = [
+  { code:"TUR",  name:"Turkey",       count:13, lat:39.0,  lng:35.0  },
+  { code:"GER",  name:"Germany",      count:8,  lat:51.2,  lng:10.4  },
+  { code:"NOR",  name:"Norway",       count:6,  lat:60.5,  lng:8.5   },
+  { code:"NED",  name:"Netherlands",  count:4,  lat:52.4,  lng:5.3   },
+  { code:"DEN",  name:"Denmark",      count:4,  lat:56.0,  lng:9.5   },
+  { code:"USA",  name:"USA",          count:3,  lat:38.0,  lng:-97.0 },
+  { code:"UK",   name:"UK",           count:3,  lat:54.0,  lng:-2.0  },
+  { code:"SER",  name:"Serbia",       count:3,  lat:44.0,  lng:21.0  },
+  { code:"FRA",  name:"France",       count:2,  lat:46.2,  lng:2.2   },
+  { code:"GRE",  name:"Greece",       count:2,  lat:39.1,  lng:22.0  },
+  { code:"JAP",  name:"Japan",        count:2,  lat:36.2,  lng:138.0 },
+  { code:"SWISS",name:"Switzerland",  count:2,  lat:46.8,  lng:8.2   },
+  { code:"SPA",  name:"Spain",        count:2,  lat:40.4,  lng:-3.7  },
+  { code:"SWE",  name:"Sweden",       count:2,  lat:60.1,  lng:18.6  },
+  { code:"CZE",  name:"Czech Rep.",   count:1,  lat:49.8,  lng:15.5  },
+  { code:"ITA",  name:"Italy",        count:1,  lat:42.8,  lng:12.8  },
+  { code:"POL",  name:"Poland",       count:1,  lat:52.1,  lng:19.4  },
+  { code:"ICE",  name:"Iceland",      count:1,  lat:64.5,  lng:-18.0 },
+  { code:"MLA",  name:"Malta",        count:1,  lat:35.9,  lng:14.4  },
+  { code:"BEL",  name:"Belgium",      count:1,  lat:50.6,  lng:5.6   },
+];
+
+/* ═══════════════════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════════════════ */
+const parseTime = t => { const [h,m] = t.split(':').map(Number); return h*60+m; };
+const fmtTime   = m => `${Math.floor(m/60)}:${(m%60).toString().padStart(2,'0')}`;
+const timeColor = m => m<175?'#fbbf24': m<180?'#22c55e': m<195?'#86efac': m>=240?'#ef4444':'#3b82f6';
+
+/** ISO 3166-1 alpha-2 for flag images (emoji flags are unreliable on Windows). */
+const COUNTRY_ISO2 = {
+  TUR:'tr', GER:'de', NOR:'no', NED:'nl', DEN:'dk', USA:'us', UK:'gb', SER:'rs',
+  FRA:'fr', GRE:'gr', JAP:'jp', SWISS:'ch', SPA:'es', SWE:'se', CZE:'cz', ITA:'it',
+  POL:'pl', ICE:'is', MLA:'mt', BEL:'be'
+};
+function flagImgHtml(countryCode, w = 24) {
+  const iso = COUNTRY_ISO2[countryCode];
+  if (!iso) return '';
+  const h = Math.max(12, Math.round(w * 3 / 4));
+  /* flagcdn only serves select widths (w20, w40, …); arbitrary w22/w48 return 404. */
+  const src = `https://flagcdn.com/w40/${iso}.png`;
+  return `<img class="flag-img" src="${src}" alt="" width="${w}" height="${h}" loading="lazy" decoding="async">`;
+}
+
+/** Flags for horizontal bar charts (indexAxis:'y') — canvas cannot use HTML flags in tick text. */
+function createYAxisFlagBarPlugin(pluginId, getCountryCodeForIndex, opt = {}) {
+  const flagW = opt.flagW ?? 20;
+  const flagH = opt.flagH ?? 15;
+  const gap = opt.gap ?? 8;
+  const imgCache = new Map();
+
+  function ensureImg(iso, chart) {
+    if (!iso) return null;
+    if (!imgCache.has(iso)) {
+      const im = new Image();
+      im.decoding = 'async';
+      im.onload = () => { try { chart.update('none'); } catch (_) {} };
+      im.src = `https://flagcdn.com/w40/${iso}.png`;
+      imgCache.set(iso, im);
+    }
+    return imgCache.get(iso);
+  }
+
+  return {
+    id: pluginId,
+    afterInit(chart) {
+      const n = chart.data.labels.length;
+      for (let i = 0; i < n; i++) {
+        const iso = COUNTRY_ISO2[getCountryCodeForIndex(i)];
+        if (iso) ensureImg(iso, chart);
+      }
+    },
+    afterDatasetsDraw(chart) {
+      const meta = chart.getDatasetMeta(0);
+      if (!meta || !meta.data || !meta.data.length) return;
+      const { ctx } = chart;
+      /* Room must exist between tick labels and bars (y.ticks.padding); draw in that strip. */
+      const xFlag = chart.chartArea.left - flagW - gap;
+      meta.data.forEach((bar, i) => {
+        const iso = COUNTRY_ISO2[getCountryCodeForIndex(i)];
+        if (!iso) return;
+        const img = ensureImg(iso, chart);
+        if (!img || !img.complete || !img.naturalWidth) return;
+        const cy = bar.y;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(128,128,128,0.4)';
+        ctx.lineWidth = 1;
+        ctx.drawImage(img, xFlag, cy - flagH / 2, flagW, flagH);
+        ctx.strokeRect(xFlag + 0.5, cy - flagH / 2 + 0.5, flagW - 1, flagH - 1);
+        ctx.restore();
+      });
+    }
+  };
+}
+
+const countryMap = {};
+countryData.forEach(c => { countryMap[c.code] = c; });
+
+// Enrich race objects
+let pb = Infinity;
+races.forEach((r,i) => {
+  r.idx     = i+1;
+  r.minutes = parseTime(r.time);
+  r.isPB    = r.minutes < pb;
+  if (r.isPB) pb = r.minutes;
+});
+
+const sortedByTime = [...races].sort((a,b) => a.minutes-b.minutes);
+races.forEach(r => { r.rank = sortedByTime.indexOf(r)+1; });
+
+/* ═══════════════════════════════════════════════════════
+   STATS
+═══════════════════════════════════════════════════════ */
+const sub3Count  = races.filter(r=>r.minutes<180).length;
+const totalMins  = races.reduce((s,r)=>s+r.minutes,0);
+const totalHours = Math.floor(totalMins/60);
+const totalRem   = totalMins%60;
+const avgMins    = Math.round(totalMins/races.length);
+
+document.getElementById('sSub3').textContent  = sub3Count;
+document.getElementById('sKm').textContent    = '2,616';
+document.getElementById('sTime').textContent  = `${totalHours}h`;
+document.getElementById('sAvg').textContent   = fmtTime(avgMins);
+
+/* ═══════════════════════════════════════════════════════
+   THEME TOGGLE
+═══════════════════════════════════════════════════════ */
+let isDark = true;
+let leafletDarkLayer, leafletLightLayer, leafletMap;
+
+function toggleTheme() {
+  isDark = !isDark;
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  document.getElementById('themeBtn').textContent = isDark ? '🌙 Dark' : '☀️ Light';
+  if (leafletMap && leafletDarkLayer && leafletLightLayer) {
+    if (isDark) {
+      leafletLightLayer.remove();
+      leafletDarkLayer.addTo(leafletMap);
+    } else {
+      leafletDarkLayer.remove();
+      leafletLightLayer.addTo(leafletMap);
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   CHART DEFAULTS
+═══════════════════════════════════════════════════════ */
+Chart.defaults.color = '#8b949e';
+Chart.defaults.borderColor = 'rgba(48,54,61,0.5)';
+
+const chartOpts = (extra={}) => ({
+  responsive: true, maintainAspectRatio: false,
+  plugins: { legend:{ display:false }, tooltip:{ backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12 } },
+  ...extra
+});
+const yTimeScale = (min=160, max=275) => ({
+  min, max,
+  grid: { color:'rgba(255,255,255,0.05)' },
+  ticks: { color:'#8b949e', callback: v=>fmtTime(v) }
+});
+
+/* ═══════════════════════════════════════════════════════
+   1. PROGRESS TIMELINE
+═══════════════════════════════════════════════════════ */
+(function() {
+  const ctx = document.getElementById('progressChart').getContext('2d');
+  const labels = races.map(r=>`${r.name} ${r.year}`);
+  const data   = races.map(r=>r.minutes);
+
+  const ptColors = races.map(r => r.isPB?'#fbbf24': r.major?'#a78bfa': r.minutes<180?'#22c55e': r.minutes>=240?'#ef4444':'#3b82f6');
+  const ptSizes  = races.map(r => r.isPB?10: r.major?8: 5);
+  const ptStyles = races.map(r => r.isPB?'star':'circle');
+
+  const wSize=5;
+  const rollAvg = data.map((_,i)=>{
+    const sl = data.slice(Math.max(0,i-wSize+1),i+1);
+    return Math.round(sl.reduce((a,b)=>a+b,0)/sl.length);
+  });
+
+  new Chart(ctx, {
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        { label:'Time', data, borderColor:'rgba(99,120,180,0.35)', borderWidth:1.5,
+          pointBackgroundColor:ptColors, pointBorderColor:ptColors,
+          pointRadius:ptSizes, pointHoverRadius:10, pointStyle:ptStyles,
+          tension:0.3, fill:false, order:1 },
+        { label:'Rolling avg', data:rollAvg, borderColor:'#f97316', borderWidth:2.5,
+          borderDash:[6,3], pointRadius:0, tension:0.4, fill:false, order:0 }
+      ]
+    },
+    options:{
+      ...chartOpts(),
+      onClick(e,els){ if(els.length){ openModal(races[els[0].index]); } },
+      plugins:{
+        legend:{display:false},
+        tooltip:{ backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          callbacks:{
+            title: items=>labels[items[0].dataIndex],
+            label: item=>{
+              if(item.datasetIndex===0){
+                const r=races[item.dataIndex];
+                return ` ${r.time}${r.isPB?' 🏆 PB':''}${r.major?' ⭐ Major':''}`;
+              }
+              return ` Rolling avg: ${fmtTime(item.raw)}`;
+            }
+          }
+        },
+        annotation:{
+          annotations:{
+            target:{ type:'line', yMin:170, yMax:170,
+              borderColor:'rgba(251,191,36,0.5)', borderWidth:1.5, borderDash:[5,5],
+              label:{ content:'2:50 target', display:true, position:'end',
+                backgroundColor:'transparent', color:'#fbbf24', font:{size:10} } }
+          }
+        }
+      },
+      scales:{
+        x:{ ticks:{display:false}, grid:{color:'rgba(255,255,255,0.03)'} },
+        y: yTimeScale()
+      }
+    }
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════
+   2. PB PROGRESSION STEP CHART
+═══════════════════════════════════════════════════════ */
+(function() {
+  const ctx = document.getElementById('pbChart').getContext('2d');
+  let curPB = Infinity;
+  const pbPoints = [];
+  races.forEach((r,i) => {
+    if(r.minutes < curPB){ curPB=r.minutes; pbPoints.push({x:i+1, y:curPB, race:r}); }
+  });
+
+  // Build stepped data: for each race index, what was the PB at that point?
+  let best = Infinity;
+  const pbLine = races.map((r,i) => {
+    if(r.minutes < best) best = r.minutes;
+    return best;
+  });
+
+  new Chart(ctx, {
+    type:'line',
+    data:{
+      labels: races.map(r=>`${r.name} ${r.year}`),
+      datasets:[
+        { label:'PB level', data:pbLine, stepped:'after',
+          borderColor:'#fbbf24', borderWidth:2.5,
+          backgroundColor:'rgba(251,191,36,0.08)',
+          pointRadius:0, fill:true, tension:0 },
+        { label:'PB set', data:pbPoints.map(p=>({ x:p.x-1, y:p.y })),
+          borderColor:'transparent', backgroundColor:'#fbbf24',
+          pointRadius:8, pointStyle:'star', showLine:false }
+      ]
+    },
+    options:{
+      ...chartOpts(),
+      plugins:{ legend:{display:false},
+        tooltip:{ backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          filter: i=>i.datasetIndex===1,
+          callbacks:{ title:()=>'Personal Best', label: i=>{
+            const r=pbPoints[i.dataIndex]?.race;
+            return r?` ${r.name} ${r.year} — ${r.time}`:'';
+          }}
+        }
+      },
+      scales:{
+        x:{ ticks:{display:false}, grid:{color:'rgba(255,255,255,0.03)'} },
+        y: yTimeScale(160,230)
+      }
+    }
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════
+   3. TIME DISTRIBUTION HISTOGRAM
+═══════════════════════════════════════════════════════ */
+(function() {
+  const ctx = document.getElementById('distChart').getContext('2d');
+  const buckets = [
+    { label:'< 2:55', min:0,   max:175, color:'#fbbf24' },
+    { label:'2:55–3:00', min:175, max:180, color:'#22c55e' },
+    { label:'3:00–3:10', min:180, max:190, color:'#86efac' },
+    { label:'3:10–3:20', min:190, max:200, color:'#3b82f6' },
+    { label:'3:20–3:30', min:200, max:210, color:'#60a5fa' },
+    { label:'3:30–3:45', min:210, max:225, color:'#a78bfa' },
+    { label:'3:45–4:00', min:225, max:240, color:'#f97316' },
+    { label:'4:00+',     min:240, max:999, color:'#ef4444' },
+  ];
+  const counts = buckets.map(b => races.filter(r=>r.minutes>=b.min && r.minutes<b.max).length);
+
+  new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: buckets.map(b=>b.label),
+      datasets:[{ data:counts,
+        backgroundColor: buckets.map(b=>b.color+'bb'),
+        borderColor: buckets.map(b=>b.color),
+        borderWidth:1.5, borderRadius:8 }]
+    },
+    options:{
+      ...chartOpts(),
+      plugins:{ legend:{display:false},
+        tooltip:{ backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          callbacks:{ label: i=>`${i.raw} race${i.raw!==1?'s':''}` }
+        }
+      },
+      scales:{
+        x:{ grid:{display:false}, ticks:{color:'#8b949e', font:{size:10}} },
+        y:{ grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8b949e', stepSize:1} }
+      }
+    }
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════
+   4. COUNTRY CHART (with click filter)
+═══════════════════════════════════════════════════════ */
+let activeCountryFilter = null;
+(function() {
+  const ctx = document.getElementById('countryChart').getContext('2d');
+  const palette = ['#f97316','#fbbf24','#22c55e','#3b82f6','#a78bfa','#ec4899',
+                   '#06b6d4','#84cc16','#f43f5e','#fb923c','#34d399','#60a5fa',
+                   '#c084fc','#f472b6','#2dd4bf','#a3e635','#fcd34d','#6ee7b7','#93c5fd'];
+
+  const chart = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels: countryData.map(c=>c.name),
+      datasets:[{ data:countryData.map(c=>c.count),
+        backgroundColor: palette.map(c=>c+'cc'),
+        borderColor: palette, borderWidth:1.5, borderRadius:6 }]
+    },
+    options:{
+      indexAxis:'y',
+      layout: { padding: { left: 6 } },
+      ...chartOpts(),
+      onClick(e, els){
+        if(!els.length){ activeCountryFilter=null; }
+        else {
+          const code = countryData[els[0].index].code;
+          activeCountryFilter = activeCountryFilter===code ? null : code;
+        }
+        renderTable();
+        // highlight active
+        const bg = palette.map((c,i)=>{
+          const code = countryData[i].code;
+          return (!activeCountryFilter || code===activeCountryFilter) ? c+'cc' : c+'33';
+        });
+        chart.data.datasets[0].backgroundColor = bg;
+        chart.update();
+      },
+      plugins:{ legend:{display:false},
+        tooltip:{ backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          callbacks:{ label: i=>`${i.raw} race${i.raw>1?'s':''}` }
+        }
+      },
+      scales:{
+        x:{ grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8b949e',stepSize:1} },
+        y:{ grid:{display:false}, ticks:{color:'#e6edf3', font:{size:12}, padding: 32} }
+      }
+    },
+    plugins: [createYAxisFlagBarPlugin('flags_racesByCountry', i => countryData[i].code)]
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════
+   5. YEAR CHART
+═══════════════════════════════════════════════════════ */
+(function() {
+  const ctx = document.getElementById('yearChart').getContext('2d');
+  const yearCounts = {};
+  races.forEach(r=>{ yearCounts[r.year]=(yearCounts[r.year]||0)+1; });
+  const yrs = Object.keys(yearCounts).sort();
+  const counts = yrs.map(y=>yearCounts[y]);
+  const max = Math.max(...counts);
+
+  new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels:yrs,
+      datasets:[{ data:counts,
+        backgroundColor: counts.map(v=>`rgba(249,115,22,${0.3+v/max*0.7})`),
+        borderColor:'#f97316', borderWidth:1.5, borderRadius:8 }]
+    },
+    options:{
+      ...chartOpts(),
+      plugins:{ legend:{display:false},
+        tooltip:{ backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          callbacks:{ label: i=>`${i.raw} races` }
+        }
+      },
+      scales:{
+        x:{ grid:{display:false}, ticks:{color:'#e6edf3'} },
+        y:{ grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8b949e',stepSize:1} }
+      }
+    }
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════
+   6. LEAFLET WORLD MAP
+═══════════════════════════════════════════════════════ */
+(function() {
+  leafletMap = L.map('worldMap', { zoomControl:true, scrollWheelZoom:false }).setView([45, 15], 3);
+
+  leafletDarkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution:'&copy; <a href="https://carto.com/">CARTO</a>', subdomains:'abcd', maxZoom:19
+  });
+  leafletLightLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution:'&copy; <a href="https://carto.com/">CARTO</a>', subdomains:'abcd', maxZoom:19
+  });
+
+  leafletDarkLayer.addTo(leafletMap);
+
+  const maxCount = Math.max(...countryData.map(c=>c.count));
+
+  countryData.forEach(c => {
+    const r = 14 + (c.count/maxCount)*28;
+    const alpha = 0.35 + (c.count/maxCount)*0.55;
+    const circle = L.circleMarker([c.lat, c.lng], {
+      radius: r,
+      fillColor:'#f97316', color:'#fbbf24',
+      weight: c.count===maxCount ? 3 : 1.5,
+      opacity: 0.9, fillOpacity: alpha
+    });
+
+    const raceList = races.filter(r=>r.country===c.code);
+    const best = Math.min(...raceList.map(r=>r.minutes));
+    circle.bindPopup(`
+      <div class="map-popup-title">${flagImgHtml(c.code, 22)}<span>${c.name}</span></div>
+      <div class="map-popup-count">${c.count} race${c.count>1?'s':''}</div>
+      <div style="margin-top:6px;font-size:0.85rem;color:#8b949e">Best: ${fmtTime(best)}</div>
+    `);
+
+    circle.on('mouseover', function(){ this.openPopup(); });
+    circle.addTo(leafletMap);
+
+    // Label
+    L.marker([c.lat, c.lng], {
+      icon: L.divIcon({
+        className:'',
+        html: `<div style="font-size:${c.count>=5?'1.1':'0.9'}rem;font-weight:800;color:#fff;text-shadow:0 0 6px rgba(0,0,0,0.8);white-space:nowrap;pointer-events:none;">${c.count}</div>`,
+        iconAnchor:[8,8]
+      })
+    }).addTo(leafletMap);
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════
+   7. BEST TIME PER YEAR
+═══════════════════════════════════════════════════════ */
+(function() {
+  const ctx = document.getElementById('bestYearChart').getContext('2d');
+  const yearBest = {};
+  races.forEach(r=>{ if(!yearBest[r.year]||r.minutes<yearBest[r.year]) yearBest[r.year]=r.minutes; });
+  const yrs = Object.keys(yearBest).sort();
+  const bests = yrs.map(y=>yearBest[y]);
+
+  new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels:yrs,
+      datasets:[{ data:bests,
+        backgroundColor: bests.map(v=>timeColor(v)+'aa'),
+        borderColor: bests.map(v=>timeColor(v)),
+        borderWidth:1.5, borderRadius:8 }]
+    },
+    options:{
+      ...chartOpts(),
+      plugins:{ legend:{display:false},
+        tooltip:{ backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          callbacks:{ label: i=>`Best: ${fmtTime(i.raw)}` }
+        },
+        annotation:{
+          annotations:{
+            target:{ type:'line', yMin:170, yMax:170,
+              borderColor:'rgba(251,191,36,0.5)', borderWidth:1.5, borderDash:[5,5],
+              label:{ content:'2:50', display:true, position:'end',
+                backgroundColor:'transparent', color:'#fbbf24', font:{size:10} } }
+          }
+        }
+      },
+      scales:{
+        x:{ grid:{display:false}, ticks:{color:'#e6edf3'} },
+        y: yTimeScale(160,270)
+      }
+    }
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════
+   8. MAJORS vs REGULAR
+═══════════════════════════════════════════════════════ */
+(function() {
+  const majors  = races.filter(r=>r.major);
+  const regular = races.filter(r=>!r.major);
+  const avg  = arr => Math.round(arr.reduce((s,r)=>s+r.minutes,0)/arr.length);
+  const best = arr => Math.min(...arr.map(r=>r.minutes));
+  const worst= arr => Math.max(...arr.map(r=>r.minutes));
+
+  const mAvg=avg(majors), rAvg=avg(regular);
+  const mBest=best(majors), rBest=best(regular);
+  const mWorst=worst(majors), rWorst=worst(regular);
+
+  const grid = document.getElementById('compareGrid');
+  grid.innerHTML = `
+    <div class="compare-card">
+      <h3 style="color:#fbbf24">⭐ World Majors (${majors.length})</h3>
+      <div class="compare-row"><span class="compare-label">Average</span><span class="compare-val">${fmtTime(mAvg)}</span></div>
+      <div class="compare-row"><span class="compare-label">Best</span><span class="compare-val" style="color:#22c55e">${fmtTime(mBest)}</span></div>
+      <div class="compare-row"><span class="compare-label">Hardest</span><span class="compare-val" style="color:#ef4444">${fmtTime(mWorst)}</span></div>
+    </div>
+    <div class="compare-card">
+      <h3 style="color:#3b82f6">🏃 Regular (${regular.length})</h3>
+      <div class="compare-row"><span class="compare-label">Average</span><span class="compare-val">${fmtTime(rAvg)}</span></div>
+      <div class="compare-row"><span class="compare-label">Best</span><span class="compare-val" style="color:#22c55e">${fmtTime(rBest)}</span></div>
+      <div class="compare-row"><span class="compare-label">Hardest</span><span class="compare-val" style="color:#ef4444">${fmtTime(rWorst)}</span></div>
+    </div>`;
+
+  // Stacked comparison mini-chart
+  const ctx = document.getElementById('compareChart').getContext('2d');
+  new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels:['Avg','Best','Hardest'],
+      datasets:[
+        { label:'Majors', data:[mAvg,mBest,mWorst], backgroundColor:'rgba(251,191,36,0.7)', borderColor:'#fbbf24', borderWidth:1.5, borderRadius:6 },
+        { label:'Regular',data:[rAvg,rBest,rWorst], backgroundColor:'rgba(59,130,246,0.7)', borderColor:'#3b82f6', borderWidth:1.5, borderRadius:6 }
+      ]
+    },
+    options:{
+      ...chartOpts(),
+      plugins:{ legend:{display:true, labels:{color:'#8b949e',boxWidth:12,font:{size:11}}},
+        tooltip:{ backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          callbacks:{ label: i=>`${i.dataset.label}: ${fmtTime(i.raw)}` }
+        }
+      },
+      scales:{
+        x:{ grid:{display:false}, ticks:{color:'#8b949e'} },
+        y: yTimeScale(160,240)
+      }
+    }
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════
+   9. FLAG PASSPORT GRID
+═══════════════════════════════════════════════════════ */
+(function() {
+  const grid = document.getElementById('passportGrid');
+  countryData.sort((a,b)=>b.count-a.count).forEach(c=>{
+    const el = document.createElement('div');
+    el.className = 'passport-item';
+    el.title = `${c.name}: ${c.count} race${c.count>1?'s':''}`;
+    el.innerHTML = `<div class="passport-flag">${flagImgHtml(c.code, 40)}</div><div class="passport-name">${c.name}</div><div class="passport-count">${c.count}</div>`;
+    el.onclick = () => {
+      activeCountryFilter = activeCountryFilter===c.code ? null : c.code;
+      renderTable();
+    };
+    grid.appendChild(el);
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════
+   10. YEAR × COUNTRY HEATMAP
+═══════════════════════════════════════════════════════ */
+(function() {
+  const years = [2016,2017,2018,2019,2020,2021,2022,2023,2024,2025,2026];
+  const countries = [...countryData].sort((a,b)=>b.count-a.count);
+  const matrix = {};
+  races.forEach(r=>{ const k=`${r.year}-${r.country}`; matrix[k]=(matrix[k]||0)+1; });
+  const maxVal = Math.max(...Object.values(matrix));
+
+  let html = '<table class="heatmap-table"><thead><tr><th class="year-head">Year</th>';
+  countries.forEach(c=>{ html+=`<th title="${c.name}" style="text-align:center;padding:6px 4px;vertical-align:middle">${flagImgHtml(c.code, 22)}</th>`; });
+  html+='</tr></thead><tbody>';
+
+  years.forEach(y=>{
+    html+=`<tr><td class="year-label">${y}</td>`;
+    countries.forEach(c=>{
+      const v = matrix[`${y}-${c.code}`]||0;
+      const alpha = v===0?0:0.18+(v/maxVal)*0.75;
+      const cls = v===0?'heat-cell empty':'heat-cell';
+      const style = v>0?`background:rgba(249,115,22,${alpha.toFixed(2)});cursor:pointer`:'';
+      const click = v>0?`onclick="openHeatmapModal(${y},'${c.code}')"`:'' ;
+      html+=`<td class="${cls}" style="${style}" title="${c.name} ${y}: ${v||'no'} race${v!==1?'s':''}" ${click}>${v||''}</td>`;
+    });
+    html+='</tr>';
+  });
+  html+='</tbody></table>';
+  document.getElementById('heatmapContainer').innerHTML = html;
+})();
+
+/* ═══════════════════════════════════════════════════════
+   11. TOP 10 FASTEST
+═══════════════════════════════════════════════════════ */
+(function() {
+  const top10 = [...races].sort((a,b)=>a.minutes-b.minutes).slice(0,10);
+  const container = document.getElementById('topTimes');
+  top10.forEach((r,i)=>{
+    const rankClass = i===0?'r1':i===1?'r2':i===2?'r3':'rN';
+    const el = document.createElement('div');
+    el.className = 'podium-item';
+    el.onclick = ()=>openModal(r);
+    el.innerHTML = `
+      <div class="podium-rank ${rankClass}">${i+1}</div>
+      <div class="podium-name">${r.name}${r.major?` <span class="major-badge">⭐ Major</span>`:''}</div>
+      <div class="podium-year">${r.year}</div>
+      <div class="podium-time" style="color:${timeColor(r.minutes)}">${r.time}</div>`;
+    container.appendChild(el);
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════
+   12. AVG BY YEAR
+═══════════════════════════════════════════════════════ */
+(function() {
+  const ctx = document.getElementById('avgYearChart').getContext('2d');
+  const groups = {};
+  races.forEach(r=>{ if(!groups[r.year]) groups[r.year]=[]; groups[r.year].push(r.minutes); });
+  const yrs = Object.keys(groups).sort();
+  const avgs = yrs.map(y=>Math.round(groups[y].reduce((a,b)=>a+b,0)/groups[y].length));
+
+  new Chart(ctx, {
+    type:'line',
+    data:{ labels:yrs, datasets:[{
+      data:avgs, borderColor:'#a78bfa', backgroundColor:'rgba(167,139,250,0.08)',
+      borderWidth:2.5, pointBackgroundColor:avgs.map(v=>timeColor(v)),
+      pointRadius:6, pointHoverRadius:9, tension:0.4, fill:true
+    }]},
+    options:{
+      ...chartOpts(),
+      plugins:{ legend:{display:false},
+        tooltip:{ backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          callbacks:{ label: i=>`Avg: ${fmtTime(i.raw)}` }
+        }
+      },
+      scales:{
+        x:{ grid:{display:false}, ticks:{color:'#e6edf3'} },
+        y: yTimeScale(160,270)
+      }
+    }
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════
+   RACE TABLE
+═══════════════════════════════════════════════════════ */
+let sortCol='idx', sortDir=1, activeFilter='all', searchQuery='';
+
+function renderTable(){
+  let list = races.filter(r=>{
+    if(activeFilter==='major') return r.major;
+    if(activeFilter==='sub3')  return r.minutes<180;
+    if(!isNaN(activeFilter))   return r.year===parseInt(activeFilter);
+    return true;
+  });
+  if(activeCountryFilter) list = list.filter(r=>r.country===activeCountryFilter);
+  if(searchQuery){
+    const q=searchQuery.toLowerCase();
+    list = list.filter(r=>r.name.toLowerCase().includes(q)||(countryMap[r.country]?.name||'').toLowerCase().includes(q));
+  }
+  list.sort((a,b)=>{
+    let av=a[sortCol], bv=b[sortCol];
+    if(typeof av==='string'){ av=av.toLowerCase(); bv=bv.toLowerCase(); }
+    return av<bv?-sortDir:av>bv?sortDir:0;
+  });
+
+  const tbody = document.getElementById('racesBody');
+  tbody.innerHTML='';
+  list.forEach((r,i)=>{
+    const c = countryMap[r.country]||{name:r.country};
+    const tc = r.minutes<180?'sub3':r.minutes<195?'fast':r.minutes>=240?'tough':'';
+    const tr = document.createElement('tr');
+    tr.onclick = ()=>openModal(r);
+    tr.innerHTML=`
+      <td style="color:var(--muted)">${i+1}</td>
+      <td><span class="cell-flag-label">${flagImgHtml(r.country, 18)}<span>${r.name}${r.major?` <span class="major-badge">⭐</span>`:''}</span></span></td>
+      <td>${r.year}</td>
+      <td><span class="cell-flag-label">${flagImgHtml(r.country, 22)}<span>${c.name}</span></span></td>
+      <td class="time-cell ${tc}">${r.time}</td>
+      <td style="color:var(--muted);font-size:0.8rem">#${r.rank} fastest</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+document.querySelectorAll('th[data-col]').forEach(th=>{
+  th.addEventListener('click',()=>{
+    const col=th.dataset.col;
+    sortDir = sortCol===col ? sortDir*-1 : 1;
+    sortCol=col; renderTable();
+  });
+});
+document.querySelectorAll('.filter-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter=btn.dataset.filter; renderTable();
+  });
+});
+document.getElementById('searchInput').addEventListener('input',e=>{ searchQuery=e.target.value; renderTable(); });
+
+renderTable();
+
+/* ═══════════════════════════════════════════════════════
+   MODAL
+═══════════════════════════════════════════════════════ */
+function openModal(race){
+  const c = countryMap[race.country]||{name:race.country};
+  const yearRaces = [...races.filter(r=>r.year===race.year)].sort((a,b)=>a.minutes-b.minutes);
+  const yearRank  = yearRaces.indexOf(race)+1;
+  const tc = race.minutes<180?'#22c55e':race.minutes<195?'#86efac':race.minutes>=240?'#ef4444':'#3b82f6';
+
+  document.getElementById('modalContent').innerHTML=`
+    <div class="modal-flag">${flagImgHtml(race.country, 48)}</div>
+    <div class="modal-title">${race.name}</div>
+    <div class="modal-subtitle">${race.year} · ${c.name}${race.major?' · <span class="major-badge">⭐ World Major</span>':''}</div>
+    <div class="modal-time" style="color:${tc}">${race.time}</div>
+    ${race.isPB?'<div style="color:#fbbf24;font-weight:700;margin-bottom:8px">🏆 Personal Best at the time!</div>':''}
+    <div class="modal-grid">
+      <div class="modal-stat-box">
+        <div class="modal-stat-label">Overall Rank</div>
+        <div class="modal-stat-val">#${race.rank} / 62</div>
+      </div>
+      <div class="modal-stat-box">
+        <div class="modal-stat-label">Rank in ${race.year}</div>
+        <div class="modal-stat-val">#${yearRank} / ${yearRaces.length}</div>
+      </div>
+      <div class="modal-stat-box">
+        <div class="modal-stat-label">Gap to PB</div>
+        <div class="modal-stat-val">+${fmtTime(race.minutes-172)}</div>
+      </div>
+      <div class="modal-stat-box">
+        <div class="modal-stat-label">Time bucket</div>
+        <div class="modal-stat-val">${race.minutes<175?'Elite sub-2:55':race.minutes<180?'Sub-3:00':race.minutes<195?'Strong':race.minutes<210?'Solid':race.minutes<240?'Steady':'Tough day'}</div>
+      </div>
+    </div>`;
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal(e){
+  if(!e||e.target===document.getElementById('modal')||e.target.classList.contains('modal-close')){
+    document.getElementById('modal').classList.remove('open');
+  }
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeModal(); });
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.tab-btn[data-tab="${name}"]`).classList.add('active');
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById(`tab-${name}`).classList.add('active');
+  setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
+}
+
+function openHeatmapModal(year, countryCode) {
+  const c = countryMap[countryCode] || { name:countryCode };
+  const list = races
+    .filter(r => r.year === year && r.country === countryCode)
+    .sort((a,b) => a.minutes - b.minutes);
+  if (!list.length) return;
+
+  const avgMin = Math.round(list.reduce((s,r) => s+r.minutes, 0) / list.length);
+
+  let rows = list.map(r => `
+    <div onclick="closeModal();setTimeout(()=>openModal(races[${r.idx-1}]),120)"
+         style="background:var(--card2);border:1px solid var(--border);border-radius:10px;
+                padding:13px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;
+                transition:border-color 0.15s"
+         onmouseover="this.style.borderColor='#f97316'"
+         onmouseout="this.style.borderColor='var(--border)'">
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:0.95rem">${r.name}${r.major?` <span class="major-badge">⭐</span>`:''}</div>
+        <div style="font-size:0.75rem;color:var(--muted);margin-top:3px">#${r.rank} fastest overall · click for full detail</div>
+      </div>
+      <div style="font-size:1.25rem;font-weight:800;color:${timeColor(r.minutes)};font-variant-numeric:tabular-nums">${r.time}</div>
+    </div>`).join('');
+
+  let summary = list.length > 1 ? `
+    <div class="modal-grid" style="margin-top:16px">
+      <div class="modal-stat-box">
+        <div class="modal-stat-label">Best</div>
+        <div class="modal-stat-val" style="color:#22c55e">${list[0].time}</div>
+      </div>
+      <div class="modal-stat-box">
+        <div class="modal-stat-label">Average</div>
+        <div class="modal-stat-val">${fmtTime(avgMin)}</div>
+      </div>
+      <div class="modal-stat-box">
+        <div class="modal-stat-label">Slowest</div>
+        <div class="modal-stat-val" style="color:var(--muted)">${list[list.length-1].time}</div>
+      </div>
+      <div class="modal-stat-box">
+        <div class="modal-stat-label">Races</div>
+        <div class="modal-stat-val">${list.length}</div>
+      </div>
+    </div>` : '';
+
+  document.getElementById('modalContent').innerHTML = `
+    <div class="modal-flag">${flagImgHtml(countryCode, 48)}</div>
+    <div class="modal-title">${c.name}</div>
+    <div class="modal-subtitle">${year} · ${list.length} race${list.length>1?'s':''}</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">${rows}</div>
+    ${summary}`;
+
+  document.getElementById('modal').classList.add('open');
+}
+
+/* ═══════════════════════════════════════════════════════
+   HALF MARATHON
+═══════════════════════════════════════════════════════ */
+(function(){
+  const halfData = [
+    { city:'Adana',     country:'TUR', count:2, lat:37.00, lng:35.32  },
+    { city:'Ankara',    country:'TUR', count:2, lat:39.93, lng:32.86  },
+    { city:'Amsterdam', country:'NED', count:2, lat:52.37, lng:4.90   },
+    { city:'İzmir',     country:'TUR', count:2, lat:38.42, lng:27.14  },
+    { city:'Hawaii',    country:'USA', count:1, lat:21.31, lng:-157.80 },
+    { city:'Ghent',     country:'BEL', count:1, lat:51.05, lng:3.72   },
+    { city:'Giresun',   country:'TUR', count:1, lat:40.92, lng:38.39  },
+    { city:'Bodrum',    country:'TUR', count:1, lat:37.03, lng:27.43  },
+    { city:'Çeşme',    country:'TUR', count:1, lat:38.32, lng:26.30  },
+  ];
+
+  const ANKARA_LAT = 39.9333, ANKARA_LNG = 32.8597;
+  function haversine(lat1,lng1,lat2,lng2){
+    const R=6371, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
+    const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+    return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)));
+  }
+
+  const continentMap = { TUR:'Asia', NED:'Europe', BEL:'Europe', USA:'North America' };
+  const contColors   = { Asia:'#f97316', Europe:'#3b82f6', 'North America':'#22c55e' };
+
+  const totalRaces  = halfData.reduce((s,d) => s+d.count, 0);
+  const totalCities = halfData.length;
+  const totalKm     = Math.round(totalRaces * 21.0975);
+  const countries   = [...new Set(halfData.map(d => d.country))].length;
+
+  // ── Stats ─────────────────────────────────────────────
+  document.getElementById('halfStats').innerHTML = `
+    <div class="stat-card c-blue"><div class="stat-icon">½</div><div class="stat-value">${totalRaces}</div><div class="stat-label">Half Marathons</div></div>
+    <div class="stat-card c-orange"><div class="stat-icon">🏙️</div><div class="stat-value">${totalCities}</div><div class="stat-label">Cities</div></div>
+    <div class="stat-card c-green"><div class="stat-icon">🌍</div><div class="stat-value">${countries}</div><div class="stat-label">Countries</div></div>
+    <div class="stat-card c-teal"><div class="stat-icon">📏</div><div class="stat-value">${totalKm}</div><div class="stat-label">Total km</div></div>
+  `;
+
+  const palette = ['#f97316','#fbbf24','#3b82f6','#22c55e','#a78bfa','#ec4899','#06b6d4','#10b981','#f43f5e'];
+  const sorted  = [...halfData].sort((a,b) => b.count - a.count);
+
+  // ── City bar chart ─────────────────────────────────────
+  new Chart(document.getElementById('halfCityChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: sorted.map(d => d.city),
+      datasets: [{ data: sorted.map(d => d.count),
+        backgroundColor: palette.map(c => c+'bb'),
+        borderColor: palette, borderWidth:1.5, borderRadius:8 }]
+    },
+    options: {
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins: { legend:{display:false},
+        tooltip:{ backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          callbacks:{ label: i=>`${i.raw} race${i.raw>1?'s':''}` }}},
+      scales: {
+        x:{ grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8b949e',stepSize:1} },
+        y:{ grid:{display:false}, ticks:{color:'#e6edf3', font:{size:13}} }
+      }
+    }
+  });
+
+  // ── Country doughnut ───────────────────────────────────
+  const countryTotals = {};
+  halfData.forEach(d => {
+    countryTotals[d.country] = (countryTotals[d.country]||0) + d.count;
+  });
+  const cLabels = Object.keys(countryTotals);
+  const cCounts = cLabels.map(c => countryTotals[c]);
+  const cColors = ['#f97316','#3b82f6','#22c55e','#fbbf24'];
+
+  new Chart(document.getElementById('halfCountryChart').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: cLabels.map(c => `${c} (${countryTotals[c]})`),
+      datasets:[{ data:cCounts,
+        backgroundColor: cColors.map(c=>c+'cc'),
+        borderColor: cColors, borderWidth:2, hoverOffset:10 }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false, cutout:'65%',
+      plugins: {
+        legend:{ display:true, position:'bottom', labels:{ color:'#8b949e', boxWidth:12, font:{size:12}, padding:14 }},
+        tooltip:{ backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          callbacks:{ label: i=>`${i.raw} race${i.raw>1?'s':''} (${((i.raw/totalRaces)*100).toFixed(0)}%)` }}
+      }
+    },
+    plugins:[{
+      id:'centerText',
+      beforeDraw(chart){
+        const {ctx,chartArea:{top,bottom,left,right}}=chart;
+        ctx.save();
+        const cx=(left+right)/2, cy=(top+bottom)/2;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillStyle='#e6edf3'; ctx.font='bold 26px system-ui';
+        ctx.fillText(totalRaces, cx, cy-10);
+        ctx.fillStyle='#8b949e'; ctx.font='11px system-ui';
+        ctx.fillText('half marathons', cx, cy+12);
+        ctx.restore();
+      }
+    }]
+  });
+
+  // ── Leaflet map ────────────────────────────────────────
+  const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+  const halfMap = L.map('halfMap', { zoomControl:true, scrollWheelZoom:false }).setView([35,15], 2);
+  const darkTile = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+  const lightTile= 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+  let halfTileLayer = L.tileLayer(isDark ? darkTile : lightTile, {
+    attribution:'&copy; OpenStreetMap &copy; CARTO', subdomains:'abcd', maxZoom:19
+  }).addTo(halfMap);
+
+  halfData.forEach(d => {
+    const r = 6 + d.count * 4;
+    L.circleMarker([d.lat, d.lng], {
+      radius: r, color:'#f97316', fillColor:'#f97316',
+      fillOpacity:0.7, weight:2
+    }).addTo(halfMap)
+     .bindPopup(`<div style="display:flex;align-items:center;gap:8px"><span>${flagImgHtml(d.country, 22)}</span><b>${d.city}</b></div><br>${d.count} race${d.count>1?'s':''}`);
+  });
+
+  document.getElementById('themeBtn').addEventListener('click', () => {
+    const dark = document.documentElement.getAttribute('data-theme') !== 'light';
+    halfTileLayer.setUrl(dark ? lightTile : darkTile);
+  });
+
+  // ── Latitude bar chart ─────────────────────────────────
+  const latSorted = [...halfData].sort((a,b) => b.lat - a.lat);
+  new Chart(document.getElementById('halfLatChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: latSorted.map(d => d.city),
+      datasets:[{ data: latSorted.map(d => d.lat),
+        backgroundColor: latSorted.map(d => {
+          if(d.lat > 45) return '#3b82f6bb';
+          if(d.lat > 35) return '#22c55ebb';
+          return '#f97316bb';
+        }),
+        borderColor: latSorted.map(d => {
+          if(d.lat > 45) return '#3b82f6';
+          if(d.lat > 35) return '#22c55e';
+          return '#f97316';
+        }),
+        borderWidth:1.5, borderRadius:6 }]
+    },
+    options: {
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins: { legend:{display:false},
+        tooltip:{ backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          callbacks:{ label: i=>`${i.raw.toFixed(2)}° N` }}},
+      scales: {
+        x:{ grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8b949e'}, title:{display:true, text:'Latitude (°N)', color:'#8b949e'} },
+        y:{ grid:{display:false}, ticks:{color:'#e6edf3', font:{size:12}} }
+      }
+    }
+  });
+
+  // ── Distance from Home bar chart ─────────────────────
+  const distData = halfData.map(d => ({
+    ...d, dist: haversine(ANKARA_LAT, ANKARA_LNG, d.lat, d.lng)
+  })).sort((a,b) => b.dist - a.dist);
+
+  new Chart(document.getElementById('halfDistChart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: distData.map(d => d.city),
+      datasets:[{ data: distData.map(d => d.dist),
+        backgroundColor: distData.map(d => {
+          if(d.dist > 8000) return '#a78bfabb';
+          if(d.dist > 1000) return '#3b82f6bb';
+          return '#22c55ebb';
+        }),
+        borderColor: distData.map(d => {
+          if(d.dist > 8000) return '#a78bfa';
+          if(d.dist > 1000) return '#3b82f6';
+          return '#22c55e';
+        }),
+        borderWidth:1.5, borderRadius:6 }]
+    },
+    options: {
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins: { legend:{display:false},
+        tooltip:{ backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          callbacks:{ label: i=>`${i.raw.toLocaleString()} km from Home` }}},
+      scales: {
+        x:{ grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8b949e'}, title:{display:true, text:'Distance (km)', color:'#8b949e'} },
+        y:{ grid:{display:false}, ticks:{color:'#e6edf3', font:{size:12}} }
+      }
+    }
+  });
+
+  // ── Continent doughnut ─────────────────────────────────
+  const contTotals = {};
+  halfData.forEach(d => {
+    const cont = continentMap[d.country] || 'Other';
+    contTotals[cont] = (contTotals[cont]||0) + d.count;
+  });
+  const contLabels = Object.keys(contTotals);
+  const contCounts = contLabels.map(c => contTotals[c]);
+  const contColArr = contLabels.map(c => contColors[c] || '#8b949e');
+
+  new Chart(document.getElementById('halfContChart').getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: contLabels,
+      datasets:[{ data: contCounts,
+        backgroundColor: contColArr.map(c=>c+'cc'),
+        borderColor: contColArr, borderWidth:2, hoverOffset:10 }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false, cutout:'60%',
+      plugins: {
+        legend:{ display:false },
+        tooltip:{ backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          callbacks:{ label: i=>`${i.raw} race${i.raw>1?'s':''} (${((i.raw/totalRaces)*100).toFixed(0)}%)` }}
+      }
+    }
+  });
+
+  // continent legend
+  const legEl = document.getElementById('halfContLegend');
+  contLabels.forEach((c,i) => {
+    const pct = ((contCounts[i]/totalRaces)*100).toFixed(0);
+    legEl.innerHTML += `
+      <div class="legend-item">
+        <span class="legend-dot" style="background:${contColArr[i]}"></span>
+        <div>
+          <div class="legend-name">${c}</div>
+          <div class="legend-pct">${contCounts[i]} races · ${pct}%</div>
+        </div>
+      </div>`;
+  });
+
+  // ── City passport cards ────────────────────────────────
+  const grid = document.getElementById('halfPassport');
+  sorted.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'passport-item';
+    el.title = `${d.city}: ${d.count} race${d.count>1?'s':''}`;
+    el.innerHTML = `
+      <div class="passport-flag">${flagImgHtml(d.country, 40)}</div>
+      <div class="passport-name">${d.city}</div>
+      <div class="passport-count">${d.count}</div>`;
+    grid.appendChild(el);
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════
+   ANNUAL TRAINING LOG
+═══════════════════════════════════════════════════════ */
+(function() {
+  const log = [
+    { year:2016, km:2118, time:'199:26:26', runs:219 },
+    { year:2017, km:3835, time:'334:10:32', runs:334 },
+    { year:2018, km:3791, time:'310:52:46', runs:289 },
+    { year:2019, km:3871, time:'314:54:19', runs:248 },
+    { year:2020, km:1236, time:'108:59:01', runs:170 },
+    { year:2021, km:2850, time:'279:51:13', runs:243 },
+    { year:2022, km:3802, time:'315:49:14', runs:287 },
+    { year:2023, km:4459, time:'371:14:32', runs:310 },
+    { year:2024, km:4500, time:'375:53:49', runs:306 },
+    { year:2025, km:3706, time:'314:30:28', runs:275 },
+    { year:2026, km:1806, time:'150:56:23', runs:128 },
+  ];
+
+  log.forEach(d => {
+    const [h,m,s] = d.time.split(':').map(Number);
+    d.hours   = h + m/60 + s/3600;
+    d.avgKm   = parseFloat((d.km / d.runs).toFixed(2));
+  });
+
+  const totalKm   = log.reduce((s,d) => s+d.km, 0);
+  const totalRuns = log.reduce((s,d) => s+d.runs, 0);
+  const totalHrs  = log.reduce((s,d) => s+d.hours, 0);
+  const peakYear  = log.reduce((a,b) => b.km>a.km?b:a);
+
+  document.getElementById('trainStats').innerHTML = `
+    <div class="stat-card c-orange"><div class="stat-icon">📏</div><div class="stat-value">${totalKm.toLocaleString()}</div><div class="stat-label">Total Kilometres</div></div>
+    <div class="stat-card c-blue"><div class="stat-icon">👟</div><div class="stat-value">${totalRuns.toLocaleString()}</div><div class="stat-label">Total Runs</div></div>
+    <div class="stat-card c-purple"><div class="stat-icon">⏱️</div><div class="stat-value">${Math.round(totalHrs).toLocaleString()}h</div><div class="stat-label">Total Moving Time</div></div>
+    <div class="stat-card c-gold"><div class="stat-icon">🏆</div><div class="stat-value">${peakYear.year}</div><div class="stat-label">Peak Year (${peakYear.km.toLocaleString()} km)</div></div>
+  `;
+
+  const years  = log.map(d => d.year);
+  const kms    = log.map(d => d.km);
+  const runs   = log.map(d => d.runs);
+  const avgKms = log.map(d => d.avgKm);
+
+  // ── Chart 1: km bars + runs line (dual axis) ──────────
+  const ctx1 = document.getElementById('trainKmChart').getContext('2d');
+  new Chart(ctx1, {
+    data: {
+      labels: years,
+      datasets: [
+        { type:'bar', label:'Kilometres', data: kms, yAxisID:'yKm',
+          backgroundColor: kms.map(k => `rgba(249,115,22,${0.4 + (k/4500)*0.55})`),
+          borderColor:'#f97316', borderWidth:1.5, borderRadius:7, order:2 },
+        { type:'line', label:'Runs', data: runs, yAxisID:'yRuns',
+          borderColor:'#a78bfa', backgroundColor:'transparent',
+          borderWidth:2.5, pointBackgroundColor:'#a78bfa',
+          pointRadius:5, pointHoverRadius:8, tension:0.4, order:1 },
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins: {
+        legend: { display:true, labels:{ color:'#8b949e', boxWidth:12, font:{size:11} } },
+        tooltip: { backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          callbacks: { label: i => i.datasetIndex===0
+            ? ` ${i.raw.toLocaleString()} km`
+            : ` ${i.raw} runs` }
+        }
+      },
+      scales: {
+        x: { grid:{display:false}, ticks:{color:'#e6edf3'} },
+        yKm: { position:'left', grid:{color:'rgba(255,255,255,0.05)'},
+          ticks:{color:'#f97316', callback: v=>`${(v/1000).toFixed(1)}k`} },
+        yRuns: { position:'right', grid:{display:false},
+          ticks:{color:'#a78bfa'}, min:0, max:420 }
+      }
+    }
+  });
+
+  // ── Chart 2: avg km per run ───────────────────────────
+  const ctx2 = document.getElementById('trainAvgChart').getContext('2d');
+  new Chart(ctx2, {
+    type:'bar',
+    data: {
+      labels: years,
+      datasets: [{ data: avgKms,
+        backgroundColor: avgKms.map(v => `rgba(20,184,166,${0.35+(v/16)*0.6})`),
+        borderColor:'#14b8a6', borderWidth:1.5, borderRadius:7 }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins: {
+        legend:{display:false},
+        tooltip: { backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          callbacks: { label: i=>`Avg ${i.raw} km per run` }
+        }
+      },
+      scales: {
+        x: { grid:{display:false}, ticks:{color:'#e6edf3'} },
+        y: { grid:{color:'rgba(255,255,255,0.05)'},
+          ticks:{color:'#8b949e', callback: v=>`${v} km`}, min:0 }
+      }
+    }
+  });
+
+  // ── Chart 3: cumulative km ────────────────────────────
+  const ctx3 = document.getElementById('trainCumChart').getContext('2d');
+  let cum = 0;
+  const cumData = log.map(d => { cum += d.km; return cum; });
+
+  new Chart(ctx3, {
+    type:'line',
+    data: {
+      labels: years,
+      datasets: [{ data: cumData,
+        borderColor:'#fbbf24', borderWidth:3,
+        backgroundColor: 'rgba(251,191,36,0.08)',
+        pointBackgroundColor: '#fbbf24', pointRadius:6, pointHoverRadius:9,
+        tension:0.4, fill:true }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins: {
+        legend:{display:false},
+        tooltip: { backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          callbacks: {
+            label: i => ` ${i.raw.toLocaleString()} km cumulative`,
+            afterLabel: i => ` +${log[i.dataIndex].km.toLocaleString()} km in ${years[i.dataIndex]}`
+          }
+        }
+      },
+      scales: {
+        x: { grid:{display:false}, ticks:{color:'#e6edf3'} },
+        y: { grid:{color:'rgba(255,255,255,0.05)'},
+          ticks:{ color:'#8b949e', callback: v=>`${(v/1000).toFixed(0)}k km` } }
+      }
+    }
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════
+   LATITUDE CHARTS
+═══════════════════════════════════════════════════════ */
+(function() {
+  // City-level latitudes, same order as races[]
+  const lats = [
+    41.0, // Istanbul 2016
+    36.9, // Antalya 2017
+    48.9, // Paris 2017
+    36.9, // Antalya 2018
+    42.4, // Boston 2018
+    52.5, // Berlin 2018
+    36.8, // Mersin 2018
+    36.9, // Antalya 2019
+    41.9, // Rome 2019
+    59.3, // Stockholm 2019
+    41.9, // Chicago 2019
+    40.7, // New York 2019
+    36.9, // Antalya 2020
+    41.0, // Istanbul 2021
+    36.9, // Antalya 2022
+    38.4, // Izmir 2022
+    53.6, // Hamburg 2022
+    50.1, // Prague 2022
+    69.7, // Midnight Sun 2022 — Tromsø
+    57.0, // Aalborg 2022
+    63.4, // Trondheim 2022
+    50.9, // Cologne 2022
+    52.4, // Amsterdam 2022
+    47.1, // Lucerne 2022
+    41.0, // Istanbul 2022
+    39.5, // Valencia 2022
+    35.7, // Tokyo 2023
+    52.2, // Enschede 2023
+    40.6, // Thessaloniki 2023
+    38.4, // Izmir 2023
+    55.7, // Copenhagen 2023
+    78.2, // Spitsbergen 2023
+    51.9, // Münster 2023
+    52.2, // Warsaw 2023
+    48.1, // Munich 2023
+    41.0, // Istanbul 2023
+    36.9, // Antalya 2024
+    50.8, // Brighton 2024
+    53.5, // Manchester 2024
+    51.5, // London 2024
+    44.8, // Belgrade 2024
+    69.7, // Midnight Sun 2024 — Tromsø
+    64.1, // Reykjavik 2024
+    48.1, // Colmar 2024
+    50.9, // Cologne 2024
+    50.1, // Frankfurt 2024
+    37.9, // Athens 2024
+    69.7, // Polar Night 2025 — Tromsø
+    44.8, // Belgrade 2025
+    51.9, // Rotterdam 2025
+    43.06, // Chitose 2025 (Sapporo)
+    55.4, // Odense 2025
+    48.1, // Munich 2025
+    52.4, // Amsterdam 2025
+    47.1, // Lucerne 2025
+    39.5, // Valencia 2025
+    35.9, // Valletta 2026
+    44.8, // Belgrade 2026
+    60.4, // Bergen 2026
+    55.7, // Copenhagen 2026
+    50.6, // Beer Lovers 2026 — Liège
+    59.3, // Stockholm 2026
+  ];
+
+  races.forEach((r, i) => { r.lat = lats[i]; });
+
+  const continentMap = {
+    TUR:'Asia', JAP:'Asia', USA:'North America',
+    GER:'Europe', NOR:'Europe', NED:'Europe', DEN:'Europe', UK:'Europe',
+    SER:'Europe', FRA:'Europe', GRE:'Europe', SWISS:'Europe', SPA:'Europe',
+    SWE:'Europe', CZE:'Europe', ITA:'Europe', POL:'Europe', ICE:'Europe', MLA:'Europe', BEL:'Europe',
+  };
+  const contColor = { Europe:'#3b82f6', Asia:'#f97316', 'North America':'#22c55e' };
+  const ptColor = r => contColor[continentMap[r.country]] || '#8b949e';
+
+  // Latitude bands for annotation
+  const bands = [
+    { y: 78.2, label: '↑ Spitsbergen',  color: 'rgba(168,85,247,0.5)' },
+    { y: 66.5, label: 'Arctic Circle',   color: 'rgba(99,102,241,0.4)' },
+    { y: 55.0, label: 'Northern Europe', color: 'rgba(59,130,246,0.2)' },
+    { y: 45.0, label: 'Central Europe',  color: 'rgba(34,197,94,0.15)' },
+    { y: 35.0, label: 'Mediterranean',   color: 'rgba(249,115,22,0.15)' },
+  ];
+
+  // ── Chart 1: latitude over time ──────────────────────
+  const ctx1 = document.getElementById('latTimeChart').getContext('2d');
+  new Chart(ctx1, {
+    type: 'scatter',
+    data: { datasets: [{
+      data: races.map((r,i) => ({ x: i+1, y: r.lat })),
+      backgroundColor: races.map(r => ptColor(r) + 'cc'),
+      borderColor:     races.map(r => ptColor(r)),
+      pointRadius:     races.map(r => r.major ? 8 : 5),
+      pointStyle:      races.map(r => r.major ? 'star' : 'circle'),
+      pointHoverRadius: 9,
+    }]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      onClick(e, els){ if(els.length) openModal(races[els[0].index]); },
+      interaction: { mode:'nearest', intersect:true },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          callbacks: {
+            title: items => {
+              const r = races[items[0].dataIndex];
+              return `${r.name} ${r.year}`;
+            },
+            label: item => [
+              ` ${item.raw.y.toFixed(1)}°N`,
+              ` Finish: ${races[item.dataIndex].time}`,
+            ]
+          }
+        },
+        annotation: { annotations: {
+          arctic: { type:'line', yMin:66.5, yMax:66.5, borderColor:'rgba(99,102,241,0.5)', borderWidth:1, borderDash:[4,4],
+            label:{ content:'Arctic Circle 66.5°N', display:true, position:'start', backgroundColor:'transparent', color:'#818cf8', font:{size:10} }},
+          med:    { type:'line', yMin:45.0, yMax:45.0, borderColor:'rgba(34,197,94,0.3)',  borderWidth:1, borderDash:[4,4],
+            label:{ content:'45°N', display:true, position:'start', backgroundColor:'transparent', color:'#86efac', font:{size:10} }},
+        }}
+      },
+      scales: {
+        x: { title:{ display:true, text:'Race #', color:'#8b949e', font:{size:11} },
+             grid:{ color:'rgba(255,255,255,0.04)' }, ticks:{ color:'#8b949e' }, min:0, max:64 },
+        y: { title:{ display:true, text:'Latitude °N', color:'#8b949e', font:{size:11} },
+             grid:{ color:'rgba(255,255,255,0.05)' }, ticks:{ color:'#8b949e', callback: v=>`${v}°N` },
+             min:30, max:82 }
+      }
+    }
+  });
+
+  // ── Chart 2: latitude vs finish time ─────────────────
+  const ctx2 = document.getElementById('latTimeChart2').getContext('2d');
+  new Chart(ctx2, {
+    type: 'scatter',
+    data: { datasets: [{
+      data: races.map(r => ({ x: r.minutes, y: r.lat })),
+      backgroundColor: races.map(r => ptColor(r) + 'cc'),
+      borderColor:     races.map(r => ptColor(r)),
+      pointRadius:     races.map(r => r.major ? 8 : 5),
+      pointStyle:      races.map(r => r.major ? 'star' : 'circle'),
+      pointHoverRadius: 9,
+    }]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      onClick(e, els){ if(els.length) openModal(races[els[0].index]); },
+      interaction: { mode:'nearest', intersect:true },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          callbacks: {
+            title: items => {
+              const r = races[items[0].dataIndex];
+              return `${r.name} ${r.year}`;
+            },
+            label: item => [
+              ` ${item.raw.y.toFixed(1)}°N`,
+              ` Finish: ${races[item.dataIndex].time}`,
+            ]
+          }
+        },
+        annotation: { annotations: {
+          arctic: { type:'line', yMin:66.5, yMax:66.5, borderColor:'rgba(99,102,241,0.5)', borderWidth:1, borderDash:[4,4],
+            label:{ content:'Arctic Circle', display:true, position:'end', backgroundColor:'transparent', color:'#818cf8', font:{size:10} }},
+          sub3:   { type:'line', xMin:180, xMax:180, borderColor:'rgba(34,197,94,0.4)', borderWidth:1, borderDash:[4,4],
+            label:{ content:'3:00', display:true, position:'start', backgroundColor:'transparent', color:'#86efac', font:{size:10} }},
+        }}
+      },
+      scales: {
+        x: { title:{ display:true, text:'Finish Time', color:'#8b949e', font:{size:11} },
+             grid:{ color:'rgba(255,255,255,0.04)' },
+             ticks:{ color:'#8b949e', callback: v => fmtTime(v) }, min:155, max:270 },
+        y: { title:{ display:true, text:'Latitude °N', color:'#8b949e', font:{size:11} },
+             grid:{ color:'rgba(255,255,255,0.05)' }, ticks:{ color:'#8b949e', callback: v=>`${v}°N` },
+             min:30, max:82 }
+      }
+    }
+  });
+
+  // Colour legend
+  [ctx1, ctx2].forEach((_, ci) => {
+    const id = ci === 0 ? 'latTimeChart' : 'latTimeChart2';
+    const wrap = document.getElementById(id).parentElement;
+    const leg = document.createElement('div');
+    leg.style.cssText = 'display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px;font-size:0.78rem;color:var(--muted)';
+    leg.innerHTML = Object.entries(contColor).map(([k,v]) =>
+      `<span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:${v};display:inline-block"></span>${k}</span>`
+    ).join('') + `<span style="display:flex;align-items:center;gap:5px"><span style="font-size:0.9rem">⭐</span>World Major</span>`;
+    wrap.insertBefore(leg, wrap.firstChild);
+  });
+})();
+
+
+/* ═══════════════════════════════════════════════════════
+   CONSISTENCY SCORE (std dev per year)
+═══════════════════════════════════════════════════════ */
+(function(){
+  const groups={};
+  races.forEach(r=>{ if(!groups[r.year]) groups[r.year]=[]; groups[r.year].push(r.minutes); });
+  const yrs=Object.keys(groups).sort();
+  const sds=yrs.map(y=>{
+    const a=groups[y], mean=a.reduce((s,v)=>s+v,0)/a.length;
+    return parseFloat(Math.sqrt(a.reduce((s,v)=>s+(v-mean)**2,0)/a.length).toFixed(1));
+  });
+  const max=Math.max(...sds);
+
+  const ctx=document.getElementById('consistencyChart').getContext('2d');
+  new Chart(ctx,{
+    type:'bar',
+    data:{ labels:yrs,
+      datasets:[{ data:sds,
+        backgroundColor:sds.map(v=>{const t=v/max;return `rgba(${Math.round(34+215*t)},${Math.round(197-175*t)},${Math.round(94-94*t)},0.75)`;}),
+        borderColor:sds.map(v=>{const t=v/max;return `rgb(${Math.round(34+215*t)},${Math.round(197-175*t)},${Math.round(94-94*t)})` ;}),
+        borderWidth:1.5, borderRadius:7 }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false},
+        tooltip:{ backgroundColor:'#1f2937',borderColor:'#374151',borderWidth:1,padding:12,
+          callbacks:{ label:i=>{const n=groups[yrs[i.dataIndex]].length;
+            return[` Std dev: ±${i.raw} min`,` across ${n} race${n>1?'s':''}`];}}}},
+      scales:{ x:{grid:{display:false},ticks:{color:'#e6edf3'}},
+        y:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8b949e',callback:v=>`±${v}m`},min:0}}}
+  });
+})();
+
+
+/* ═══════════════════════════════════════════════════════
+   MAJORS TIMELINE
+═══════════════════════════════════════════════════════ */
+(function(){
+  const majors=races.filter(r=>r.major).sort((a,b)=>a.idx-b.idx);
+  let html=`<div style="display:flex;align-items:center;padding:24px 8px;overflow-x:auto">`;
+  majors.forEach((r,i)=>{
+    html+=`<div style="display:flex;flex-direction:column;align-items:center;gap:8px;min-width:110px;cursor:pointer"
+      onclick="openModal(races[${r.idx-1}])">
+      <div style="display:flex;justify-content:center;align-items:center;min-height:44px">${flagImgHtml(r.country, 40)}</div>
+      <div style="width:44px;height:44px;border-radius:50%;
+        background:linear-gradient(135deg,#fbbf24,#f97316);
+        display:flex;align-items:center;justify-content:center;
+        font-weight:800;font-size:1rem;color:#000;
+        box-shadow:0 0 0 4px rgba(251,191,36,0.25);position:relative;z-index:1">${i+1}</div>
+      <div style="text-align:center">
+        <div style="font-weight:700;font-size:0.88rem">${r.name}</div>
+        <div style="color:var(--muted);font-size:0.75rem">${r.year}</div>
+        <div style="color:#22c55e;font-weight:800;font-size:0.9rem;margin-top:2px">${r.time}</div>
+      </div></div>
+    ${i<majors.length-1?`<div style="flex:1;height:2px;background:linear-gradient(90deg,#fbbf24,#f97316);min-width:20px;margin-bottom:52px;opacity:0.45"></div>`:''}`;
+  });
+  html+=`</div><div style="text-align:center;padding-top:14px;border-top:1px solid var(--border);
+    color:var(--muted);font-size:0.8rem">
+    All 6 Abbott World Marathon Majors completed &nbsp;·&nbsp;
+    Best major: London 2024 (2:53) &nbsp;·&nbsp; Slowest: New York 2019 (3:42)</div>`;
+  document.getElementById('majorsTimeline').innerHTML=html;
+})();
+
+
+/* ═══════════════════════════════════════════════════════
+   LONGITUDE CHART
+═══════════════════════════════════════════════════════ */
+(function(){
+  const lngs=[
+    28.9, 30.7, 2.3, 30.7,-71.1, 13.4, 34.6, 30.7, 12.5, 18.1,
+   -87.6,-74.0, 30.7, 28.9, 30.7, 27.1, 10.0, 14.4, 18.9,  9.9,
+    10.4,  6.9,  4.9,  8.3, 28.9, -0.4,139.7,  6.9, 22.9, 27.1,
+    12.6, 15.6,  7.6, 21.0, 11.6, 28.9, 30.7, -0.1, -2.2, -0.1,
+    20.5, 18.9,-22.0,  7.4,  6.9,  8.7, 23.7, 18.9, 20.5,  4.5,
+   141.35, 10.4, 11.6,  4.9,  8.3, -0.4, 14.5, 20.5,  5.3, 12.6,
+    5.6,  // Beer Lovers 2026 — Liège
+    18.1  // Stockholm 2026
+  ];
+  races.forEach((r,i)=>{ r.lng=lngs[i]; });
+
+  const cMap2={TUR:'Asia',JAP:'Asia',USA:'North America'};
+  const cc2={Asia:'#f97316','North America':'#22c55e',Europe:'#3b82f6'};
+  const ptc=r=>cc2[cMap2[r.country]||'Europe'];
+
+  const ctx=document.getElementById('lngChart').getContext('2d');
+  new Chart(ctx,{
+    type:'scatter',
+    data:{datasets:[{
+      data:races.map((r,i)=>({x:i+1,y:lngs[i]})),
+      backgroundColor:races.map(r=>ptc(r)+'cc'),borderColor:races.map(r=>ptc(r)),
+      pointRadius:races.map(r=>r.major?8:5),pointStyle:races.map(r=>r.major?'star':'circle'),
+      pointHoverRadius:9}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'nearest',intersect:true},
+      onClick(e,els){if(els.length) openModal(races[els[0].index]);},
+      plugins:{legend:{display:false},
+        tooltip:{backgroundColor:'#1f2937',borderColor:'#374151',borderWidth:1,padding:12,
+          callbacks:{title:items=>`${races[items[0].dataIndex].name} ${races[items[0].dataIndex].year}`,
+            label:item=>[` ${item.raw.y>=0?item.raw.y+'°E':Math.abs(item.raw.y)+'°W'}`,` ${races[item.dataIndex].time}`]}},
+        annotation:{annotations:{
+          prime:{type:'line',yMin:0,yMax:0,borderColor:'rgba(255,255,255,0.2)',borderWidth:1,borderDash:[4,4],
+            label:{content:'0° Prime Meridian',display:true,position:'start',backgroundColor:'transparent',color:'#8b949e',font:{size:10}}},
+          chi:{type:'line',yMin:-87.6,yMax:-87.6,borderColor:'rgba(59,130,246,0.3)',borderWidth:1,borderDash:[4,4],
+            label:{content:'Chicago',display:true,position:'end',backgroundColor:'transparent',color:'#60a5fa',font:{size:10}}},
+          tok:{type:'line',yMin:139.7,yMax:139.7,borderColor:'rgba(249,115,22,0.35)',borderWidth:1,borderDash:[4,4],
+            label:{content:'Tokyo',display:true,position:'end',backgroundColor:'transparent',color:'#fb923c',font:{size:10}}}}}},
+      scales:{
+        x:{title:{display:true,text:'Race #',color:'#8b949e',font:{size:11}},grid:{color:'rgba(255,255,255,0.03)'},ticks:{color:'#8b949e'},min:0,max:64},
+        y:{title:{display:true,text:'Longitude',color:'#8b949e',font:{size:11}},grid:{color:'rgba(255,255,255,0.05)'},
+          ticks:{color:'#8b949e',callback:v=>v>=0?`${v}°E`:`${Math.abs(v)}°W`},min:-100,max:150}}}
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════
+   LATITUDE DISTANCE FROM HOME
+═══════════════════════════════════════════════════════ */
+(function(){
+  const HOME_LAT = 39.9333;
+  const seen=new Set(), cities=[];
+  races.forEach(r=>{
+    if(!seen.has(r.name)){ seen.add(r.name);
+      const diff = parseFloat((r.lat - HOME_LAT).toFixed(2));
+      cities.push({name:r.name, diff, lat:r.lat, country:r.country}); }
+  });
+  cities.sort((a,b) => b.diff - a.diff);
+
+  const ctx=document.getElementById('distanceChart').getContext('2d');
+  new Chart(ctx,{
+    type:'bar',
+    data:{labels:cities.map(c=>c.name),
+      datasets:[{data:cities.map(c=>c.diff),
+        backgroundColor:cities.map(c=>c.diff>=0?'#3b82f699':'#f9731699'),
+        borderColor:cities.map(c=>c.diff>=0?'#3b82f6':'#f97316'),
+        borderWidth:1.5,borderRadius:4}]},
+    options:{
+      indexAxis:'y',
+      layout: { padding: { left: 6 } },
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{legend:{display:false},
+        tooltip:{backgroundColor:'#1f2937',borderColor:'#374151',borderWidth:1,padding:12,
+          callbacks:{label:i=>{
+            const c=cities[i.dataIndex];
+            const dir=c.diff>=0?'N of home':'S of home';
+            return[` ${c.lat}°N  (${c.diff>=0?'+':''}${c.diff}°)`,` ${dir}`];
+          }}}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#8b949e',callback:v=>`${v>=0?'+':''}${v}°`},
+          title:{display:true,text:'Latitude difference from Ankara (39.93°N)',color:'#8b949e',font:{size:11}}},
+        y:{grid:{display:false},ticks:{color:'#e6edf3',font:{size:10},padding:38}}
+      }
+    },
+    plugins: [createYAxisFlagBarPlugin('flags_latDistanceHome', i => cities[i].country)]
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════
+   TRAINING VOLUME vs BEST MARATHON TIME
+═══════════════════════════════════════════════════════ */
+(function(){
+  const logKm={2016:2118,2017:3835,2018:3791,2019:3871,2020:1236,
+    2021:2850,2022:3802,2023:4459,2024:4500,2025:3706,2026:1651};
+  const yearBest={};
+  races.forEach(r=>{if(!yearBest[r.year]||r.minutes<yearBest[r.year]) yearBest[r.year]=r.minutes;});
+  const yrs=Object.keys(logKm).sort();
+
+  const ctx=document.getElementById('volPerfChart').getContext('2d');
+  new Chart(ctx,{
+    data:{labels:yrs,datasets:[
+      {type:'bar',label:'Annual km',data:yrs.map(y=>logKm[y]),yAxisID:'yKm',
+        backgroundColor:'rgba(249,115,22,0.45)',borderColor:'#f97316',borderWidth:1.5,borderRadius:6,order:2},
+      {type:'line',label:'Best marathon',data:yrs.map(y=>yearBest[y]||null),yAxisID:'yTime',
+        borderColor:'#22c55e',backgroundColor:'transparent',borderWidth:2.5,
+        pointBackgroundColor:yrs.map(y=>timeColor(yearBest[y]||200)),
+        pointRadius:6,pointHoverRadius:9,tension:0.4,order:1}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,labels:{color:'#8b949e',boxWidth:12,font:{size:11}}},
+        tooltip:{backgroundColor:'#1f2937',borderColor:'#374151',borderWidth:1,padding:12,
+          callbacks:{label:i=>i.datasetIndex===0?` ${i.raw.toLocaleString()} km trained`:` Best: ${fmtTime(i.raw)}`}}},
+      scales:{x:{grid:{display:false},ticks:{color:'#e6edf3'}},
+        yKm:{position:'left',grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#f97316',callback:v=>`${(v/1000).toFixed(1)}k`}},
+        yTime:{position:'right',grid:{display:false},ticks:{color:'#22c55e',callback:v=>fmtTime(v)},min:160,max:260,reverse:true}}}
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════
+   MARATHONS COUNT vs ANNUAL KM
+═══════════════════════════════════════════════════════ */
+(function(){
+  const logKm2={2016:2118,2017:3835,2018:3791,2019:3871,2020:1236,
+    2021:2850,2022:3802,2023:4459,2024:4500,2025:3706,2026:1651};
+  const raceCounts={};
+  races.forEach(r=>{raceCounts[r.year]=(raceCounts[r.year]||0)+1;});
+  const yrs=Object.keys(logKm2).sort();
+
+  const ctx=document.getElementById('racesKmChart').getContext('2d');
+  new Chart(ctx,{
+    data:{labels:yrs,datasets:[
+      {type:'bar',label:'Marathons',data:yrs.map(y=>raceCounts[y]||0),yAxisID:'yRaces',
+        backgroundColor:'rgba(167,139,250,0.55)',borderColor:'#a78bfa',borderWidth:1.5,borderRadius:6,order:2},
+      {type:'line',label:'Annual km',data:yrs.map(y=>logKm2[y]),yAxisID:'yKm',
+        borderColor:'#f97316',backgroundColor:'transparent',borderWidth:2.5,
+        pointBackgroundColor:'#f97316',pointRadius:5,pointHoverRadius:8,tension:0.4,order:1}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,labels:{color:'#8b949e',boxWidth:12,font:{size:11}}},
+        tooltip:{backgroundColor:'#1f2937',borderColor:'#374151',borderWidth:1,padding:12,
+          callbacks:{label:i=>i.datasetIndex===0?` ${i.raw} marathons`:` ${i.raw.toLocaleString()} km`}}},
+      scales:{x:{grid:{display:false},ticks:{color:'#e6edf3'}},
+        yRaces:{position:'left',grid:{color:'rgba(255,255,255,0.05)'},ticks:{color:'#a78bfa',stepSize:1}},
+        yKm:{position:'right',grid:{display:false},ticks:{color:'#f97316',callback:v=>`${(v/1000).toFixed(1)}k`}}}}
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════
+   CONTINENTS
+═══════════════════════════════════════════════════════ */
+(function() {
+  const continentMap = {
+    TUR:'Asia', JAP:'Asia',
+    USA:'North America',
+    GER:'Europe', NOR:'Europe', NED:'Europe', DEN:'Europe', UK:'Europe',
+    SER:'Europe', FRA:'Europe', GRE:'Europe', SWISS:'Europe', SPA:'Europe',
+    SWE:'Europe', CZE:'Europe', ITA:'Europe', POL:'Europe', ICE:'Europe', MLA:'Europe', BEL:'Europe',
+  };
+
+  const totals = {};
+  races.forEach(r => {
+    const c = continentMap[r.country] || 'Other';
+    totals[c] = (totals[c] || 0) + 1;
+  });
+
+  const order  = ['Europe','Asia','North America'];
+  const labels = order.filter(c => totals[c]);
+  const data   = labels.map(c => totals[c]);
+  const colors = { Europe:'#3b82f6', Asia:'#f97316', 'North America':'#22c55e' };
+  const bgColors  = labels.map(c => colors[c] + 'cc');
+  const brdColors = labels.map(c => colors[c]);
+
+  const ctx = document.getElementById('continentChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: bgColors, borderColor: brdColors, borderWidth: 2, hoverOffset: 10 }] },
+    options: {
+      responsive: false,
+      cutout: '68%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1f2937', borderColor: '#374151', borderWidth: 1, padding: 12,
+          callbacks: {
+            label: i => ` ${i.raw} races  (${((i.raw/races.length)*100).toFixed(1)}%)`
+          }
+        }
+      }
+    },
+    plugins: [{
+      id: 'centerText',
+      beforeDraw(chart) {
+        const { ctx, chartArea: { top, bottom, left, right } } = chart;
+        ctx.save();
+        const cx = (left + right) / 2, cy = (top + bottom) / 2;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#e6edf3'; ctx.font = 'bold 28px system-ui';
+        ctx.fillText('62', cx, cy - 10);
+        ctx.fillStyle = '#8b949e'; ctx.font = '12px system-ui';
+        ctx.fillText('marathons', cx, cy + 14);
+        ctx.restore();
+      }
+    }]
+  });
+
+  // Legend
+  const legend = document.getElementById('continentLegend');
+  const countryBreakdown = {};
+  races.forEach(r => {
+    const cont = continentMap[r.country] || 'Other';
+    if (!countryBreakdown[cont]) countryBreakdown[cont] = {};
+    countryBreakdown[cont][r.country] = (countryBreakdown[cont][r.country] || 0) + 1;
+  });
+
+  labels.forEach(cont => {
+    const pct = ((totals[cont] / races.length) * 100).toFixed(1);
+    const countries = Object.entries(countryBreakdown[cont])
+      .sort((a,b) => b[1]-a[1])
+      .map(([code, n]) => `${flagImgHtml(code, 16)} ${n}`)
+      .join('  ');
+    const div = document.createElement('div');
+    div.style.cssText = 'display:flex;flex-direction:column;gap:5px';
+    div.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:12px;height:12px;border-radius:3px;background:${colors[cont]};flex-shrink:0"></div>
+        <span style="font-weight:700;font-size:1rem">${cont}</span>
+        <span style="font-size:1.3rem;font-weight:800;color:${colors[cont]}">${totals[cont]}</span>
+        <span style="color:var(--muted);font-size:0.8rem">${pct}%</span>
+      </div>
+      <div style="padding-left:22px;font-size:0.82rem;color:var(--muted);line-height:1.8">${countries}</div>`;
+    legend.appendChild(div);
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════
+   TRAIL RACES  (independent from marathon data)
+═══════════════════════════════════════════════════════ */
+const trails = [
+  { name:"Sapanca Ultra",          dist:36,  year:2017, time:"3:49",  podium:"Age Category 3rd" },
+  { name:"Bodrum",                 dist:23,  year:2017, time:"2:38",  podium:null },
+  { name:"Tuz Gölü",              dist:20,  year:2018, time:"1:34",  podium:"General 3rd" },
+  { name:"Kapadokya Ultra Trail",  dist:120, year:2021, time:"18:51", podium:null },
+  { name:"Uludağ Ultra",          dist:66,  year:2023, time:"11:29", podium:null },
+  { name:"Kapadokya Middle Trail", dist:63,  year:2023, time:"7:57",  podium:null },
+  { name:"Uludağ Ultra",          dist:30,  year:2024, time:"4:53",  podium:null },
+];
+
+// Parse trail times (may be H:MM or HH:MM)
+trails.forEach(t => {
+  const parts = t.time.split(':').map(Number);
+  t.minutes = parts[0]*60 + parts[1];
+  t.pacePerKm = t.minutes / t.dist;          // min/km
+  t.paceStr   = (() => {
+    const total = Math.round(t.pacePerKm);
+    return `${Math.floor(total/60)?Math.floor(total/60)+'h ':''}${total%60}'`;
+  })();
+});
+
+const trailTotalKm  = trails.reduce((s,t)=>s+t.dist, 0);
+const trailPodiums  = trails.filter(t=>t.podium).length;
+const trailTotalMin = trails.reduce((s,t)=>s+t.minutes, 0);
+const trailTotalH   = Math.floor(trailTotalMin/60);
+const trailTotalM   = trailTotalMin%60;
+const longestTrail  = trails.reduce((a,b)=>b.dist>a.dist?b:a);
+
+// Trail stat cards
+document.getElementById('trailStats').innerHTML = `
+  <div class="stat-card c-green"><div class="stat-icon">⛰️</div><div class="stat-value">${trails.length}</div><div class="stat-label">Trail Races</div></div>
+  <div class="stat-card c-teal"><div class="stat-icon">📏</div><div class="stat-value">${trailTotalKm}</div><div class="stat-label">Total Trail km</div></div>
+  <div class="stat-card c-gold"><div class="stat-icon">🏆</div><div class="stat-value">${trailPodiums}</div><div class="stat-label">Podium Finishes</div></div>
+  <div class="stat-card c-purple"><div class="stat-icon">🦁</div><div class="stat-value">${longestTrail.dist}K</div><div class="stat-label">Longest Race</div></div>
+`;
+
+// Trail Race Cards
+const cardContainer = document.getElementById('trailCards');
+[...trails].sort((a,b)=>a.year-b.year).forEach(t => {
+  const div = document.createElement('div');
+  div.className = `trail-card${t.podium?' podium':''}`;
+  div.innerHTML = `
+    ${t.podium?`<div class="podium-ribbon">🏆 ${t.podium}</div>`:''}
+    <div class="trail-card-name">${t.name}</div>
+    <div class="trail-card-meta">${t.year} · ${t.dist} km</div>
+    <div class="trail-card-stats">
+      <div class="trail-stat"><div class="trail-stat-label">Finish Time</div><div class="trail-stat-val" style="color:#22c55e">${t.time}</div></div>
+      <div class="trail-stat"><div class="trail-stat-label">Avg Pace</div><div class="trail-stat-val">${Math.floor(t.pacePerKm)}'${Math.round((t.pacePerKm%1)*60).toString().padStart(2,'0')}" /km</div></div>
+      <div class="trail-stat"><div class="trail-stat-label">Distance</div><div class="trail-stat-val">${t.dist} km</div></div>
+    </div>`;
+  cardContainer.appendChild(div);
+});
+
+// Trail chart: scatter — distance (x) vs finish time (y)
+(function(){
+  const ctx = document.getElementById('trailChart').getContext('2d');
+  const colors = trails.map(t => t.podium?'#fbbf24':'#22c55e');
+  new Chart(ctx, {
+    type:'scatter',
+    data:{ datasets:[{
+      label:'Trail Race',
+      data: trails.map(t=>({ x:t.dist, y:t.minutes, trail:t })),
+      backgroundColor: colors.map(c=>c+'cc'),
+      borderColor: colors,
+      pointRadius: trails.map(t=>t.podium?10:7),
+      pointStyle: trails.map(t=>t.podium?'star':'circle'),
+      pointHoverRadius: 12,
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false},
+        tooltip:{ backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          callbacks:{
+            title: items => trails[items[0].dataIndex].name,
+            label: item => {
+              const t = trails[item.dataIndex];
+              return [` ${t.dist} km  ·  ${t.time}`,
+                      ` Pace: ${Math.floor(t.pacePerKm)}'${Math.round((t.pacePerKm%1)*60).toString().padStart(2,'0')}" /km`,
+                      t.podium ? ` 🏆 ${t.podium}` : ''].filter(Boolean);
+            }
+          }
+        }
+      },
+      scales:{
+        x:{ title:{ display:true, text:'Distance (km)', color:'#8b949e', font:{size:11} },
+            grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8b949e'}, min:0, max:130 },
+        y:{ title:{ display:true, text:'Finish Time', color:'#8b949e', font:{size:11} },
+            grid:{color:'rgba(255,255,255,0.05)'},
+            ticks:{ color:'#8b949e', callback: v => {
+              const h=Math.floor(v/60), m=v%60;
+              return h>0?`${h}h${m>0?m+'m':''}`:`${m}m`;
+            }},
+            min:0 }
+      }
+    }
+  });
+})();
+
+// Trail pace chart: horizontal bar sorted by pace
+(function(){
+  const ctx = document.getElementById('trailPaceChart').getContext('2d');
+  const sorted = [...trails].sort((a,b)=>a.pacePerKm-b.pacePerKm);
+  const labels = sorted.map(t=>`${t.name} ${t.dist}K`);
+  const paces  = sorted.map(t=>parseFloat(t.pacePerKm.toFixed(2)));
+
+  new Chart(ctx, {
+    type:'bar',
+    data:{ labels, datasets:[{
+      data: paces,
+      backgroundColor: sorted.map(t=>t.podium?'rgba(251,191,36,0.7)':'rgba(34,197,94,0.65)'),
+      borderColor:     sorted.map(t=>t.podium?'#fbbf24':'#22c55e'),
+      borderWidth:1.5, borderRadius:6,
+    }]},
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false},
+        tooltip:{ backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
+          callbacks:{ label: i=>{
+            const t=sorted[i.dataIndex];
+            const pm=i.raw, m=Math.floor(pm), s=Math.round((pm-m)*60);
+            return ` ${m}'${s.toString().padStart(2,'0')}" per km`;
+          }}
+        }
+      },
+      scales:{
+        x:{ grid:{color:'rgba(255,255,255,0.05)'},
+            ticks:{ color:'#8b949e', callback: v=>{
+              const m=Math.floor(v), s=Math.round((v-m)*60);
+              return `${m}'${s.toString().padStart(2,'0')}"`;
+            }}},
+        y:{ grid:{display:false}, ticks:{color:'#e6edf3', font:{size:11}} }
+      }
+    }
+  });
+})();
+</script>
+</body>
+</html>
