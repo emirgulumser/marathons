@@ -12,7 +12,48 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(__dirname, '..');
 const gpxDir = path.join(root, 'data', 'gpx', 'marathons');
 const activitiesPath = path.join(root, 'data', 'activities.json');
+const marathonsPath = path.join(root, 'data', 'marathons.json');
 const outPath = path.join(root, 'data', 'marathon-tracks.json');
+
+function raceKey(race) {
+  return `marathon:${race.name}:${race.year}`;
+}
+
+function gpxMeta(xml) {
+  const name = xml.match(/<name>([^<]+)<\/name>/)?.[1]?.trim() || '';
+  const times = [...xml.matchAll(/<time>([^<]+)<\/time>/g)].map(m => m[1]);
+  const date = times[0] ? times[0].slice(0, 10) : null;
+  const year = date ? Number(date.slice(0, 4)) : null;
+  const firstPt = xml.match(/<trkpt lat="([^"]+)" lon="([^"]+)"/);
+  const lat = firstPt ? parseFloat(firstPt[1]) : null;
+  const lng = firstPt ? parseFloat(firstPt[2]) : null;
+  return { name, date, year, lat, lng };
+}
+
+function matchRaceFromGpx(meta, marathons) {
+  if (!meta.year) return null;
+  const candidates = marathons.filter(r => r.year === meta.year);
+  if (!candidates.length) return null;
+
+  const nameTok = meta.name.toLowerCase().replace(/\s+running$/i, '').trim();
+  const byName = candidates.find(r => {
+    const rn = r.name.toLowerCase();
+    return rn === nameTok || rn.includes(nameTok) || nameTok.includes(rn.split(' ')[0]);
+  });
+  if (byName) return byName;
+
+  if (Number.isFinite(meta.lat) && Number.isFinite(meta.lng)) {
+    let best = null;
+    let bestKm = Infinity;
+    for (const r of candidates) {
+      if (r.lat == null || r.lng == null) continue;
+      const km = haversineKm(meta.lat, meta.lng, r.lat, r.lng);
+      if (km < bestKm) { bestKm = km; best = r; }
+    }
+    if (best && bestKm <= 80) return best;
+  }
+  return null;
+}
 
 function haversineKm(lat1, lng1, lat2, lng2) {
   const R = 6371;
@@ -90,6 +131,7 @@ function main() {
   }
 
   const { activities } = JSON.parse(fs.readFileSync(activitiesPath, 'utf8'));
+  const marathons = JSON.parse(fs.readFileSync(marathonsPath, 'utf8'));
   const byId = new Map(activities.map(a => [a.id, a]));
   const tracks = loadExistingTracks();
   const files = fs.readdirSync(gpxDir).filter(f => f.endsWith('.gpx'));
@@ -108,10 +150,6 @@ function main() {
     }
     const activityId = Number(idMatch[1]);
     const act = byId.get(activityId);
-    if (!act?.raceLink || act.raceLink.kind !== 'marathon') {
-      console.warn(`Skip ${file} — activity ${activityId} is not a matched marathon`);
-      continue;
-    }
 
     const raw = fs.readFileSync(path.join(gpxDir, file), 'utf8');
     const allPoints = parseGpxPoints(raw);
@@ -120,15 +158,48 @@ function main() {
       continue;
     }
 
+    let key = null;
+    let raceName = null;
+    let raceYear = null;
+    let date = null;
+    let distKm = null;
+    let via = '';
+
+    if (act?.raceLink?.kind === 'marathon' && act.raceLink.raceKey && act.raceLink.raceName) {
+      key = act.raceLink.raceKey;
+      raceName = act.raceLink.raceName;
+      raceYear = act.raceLink.raceYear;
+      date = act.date;
+      distKm = act.distKm;
+      via = 'activity';
+    } else {
+      const meta = gpxMeta(raw);
+      const race = matchRaceFromGpx(meta, marathons);
+      if (!race) {
+        const why = !act
+          ? `no activity ${activityId} in activities.json`
+          : act.raceLink?.status === 'unlogged'
+            ? 'unlogged marathon (not in marathons.json)'
+            : 'not a matched marathon';
+        console.warn(`Skip ${file} — ${why}`);
+        continue;
+      }
+      key = raceKey(race);
+      raceName = race.name;
+      raceYear = race.year;
+      date = meta.date;
+      distKm = act?.distKm ?? trackDistanceKm(allPoints);
+      via = act ? 'gpx+activity fallback' : 'gpx fallback';
+    }
+
     const points = downsample(allPoints);
-    const raceKey = act.raceLink.raceKey;
-    tracks[raceKey] = {
+    tracks[key] = {
       activityId,
-      raceKey,
-      raceName: act.raceLink.raceName,
-      raceYear: act.raceLink.raceYear,
-      date: act.date,
-      distKm: act.distKm,
+      raceKey: key,
+      raceName,
+      raceYear,
+      date,
+      distKm,
       trackKm: trackDistanceKm(allPoints),
       sourceFile: file,
       pointCount: allPoints.length,
@@ -136,7 +207,7 @@ function main() {
       points,
     };
     added += 1;
-    console.log(`✓ ${raceKey} — ${allPoints.length} pts → ${points.length} (${file})`);
+    console.log(`✓ ${key} — ${allPoints.length} pts → ${points.length} (${file}, ${via})`);
   }
 
   const payload = {

@@ -22,6 +22,11 @@ const DEVICE_NAMES = {
   // Optional manual labels: deviceId → display name
 };
 
+/** Marathon/half-distance training runs that are not races (no ? / race match). */
+const NON_RACE_ACTIVITY_IDS = new Set([
+  19719000657, // 2025-07-13 Copenhagen long run
+]);
+
 function parseTimeStr(t) {
   const [h, m] = t.split(':').map(Number);
   return h * 60 + m;
@@ -111,6 +116,7 @@ function normalize(a) {
   }
 
   const id = a.activityId;
+  const raceTag = NON_RACE_ACTIVITY_IDS.has(id) ? null : raceTagFor(distKm, type);
   return {
     id,
     name: (a.name || 'Untitled').trim(),
@@ -135,7 +141,7 @@ function normalize(a) {
     deviceId: a.deviceId ?? null,
     tempMin: a.minTemperature ?? null,
     tempMax: a.maxTemperature ?? null,
-    raceTag: raceTagFor(distKm, type),
+    raceTag,
     garminUrl: `https://connect.garmin.com/modern/activity/${id}`,
     raceLink: null,
   };
