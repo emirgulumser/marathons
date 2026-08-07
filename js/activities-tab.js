@@ -1586,6 +1586,7 @@ window.initActivitiesTab = async function () {
         <td>${compareMode ? `<input type="checkbox" data-id="${a.id}" ${checked ? 'checked' : ''}>` : ''}</td>
         <td style="color:var(--muted)">${start + i + 1}</td>
         <td>${a.date}</td>
+        <td class="gpx-col">${typeof gpxIconHtml === 'function' ? gpxIconHtml(a) : ''}</td>
         <td>${U.activityNameHtml(a, App.races)}</td>
         <td>${U.typeLabel(a.type)}</td>
         <td>${a.distKm > 0 ? a.distKm.toFixed(2) : '—'}</td>
@@ -1702,6 +1703,7 @@ window.initActivitiesTab = async function () {
         ${extras.map(([l, v]) => `<div class="modal-stat-box"><div class="modal-stat-label">${l}</div><div class="modal-stat-val">${v}</div></div>`).join('')}
       </div>
       ${marathonRouteSectionHtml()}
+      ${typeof gpxChartsSectionHtml === 'function' ? gpxChartsSectionHtml() : ''}
       ${similar.length ? `<div class="similar-runs"><div class="section-title" style="font-size:0.9rem;margin-top:12px">Similar runs</div>${similar.map(s => `<div class="similar-run-item" data-id="${s.id}">${s.date} · ${s.distKm} km · ${U.fmtPace(s.paceMinKm)}</div>`).join('')}</div>` : ''}
       <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:10px" id="actModalActions">
         ${raceActions}
@@ -1732,6 +1734,7 @@ window.initActivitiesTab = async function () {
           window._modalRouteMap?.invalidateSize();
         };
       }
+      if (typeof mountGpxCharts === 'function') mountGpxCharts(track);
     });
   };
 
@@ -1834,6 +1837,7 @@ window.initActivitiesTab = async function () {
   initRacePredictions();
   initMap();
   refreshActivitiesView();
+  loadMarathonTracks().then(() => renderTable(getFiltered()));
 
   const meta = App.activityMeta;
   if (meta) {

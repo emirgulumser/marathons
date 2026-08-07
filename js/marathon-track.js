@@ -57,21 +57,27 @@ window.marathonRouteSectionHtml = function marathonRouteSectionHtml() {
     </div>`;
 };
 
-window.destroyModalRouteMap = function destroyModalRouteMap() {
+window.destroyModalRouteMapOnly = function destroyModalRouteMapOnly() {
   if (window._modalRouteMap) {
     window._modalRouteMap.remove();
     window._modalRouteMap = null;
   }
   window._modalRouteLayer = null;
-  document.getElementById('modalCard')?.classList.remove('modal-card--wide');
+};
+
+window.destroyModalRouteMap = function destroyModalRouteMap() {
+  destroyModalRouteMapOnly();
+  if (typeof destroyModalGpxCharts === 'function') destroyModalGpxCharts();
+  document.getElementById('modalCard')?.classList.remove('modal-card--wide', 'modal-card--charts');
 };
 
 window.renderModalRouteMap = function renderModalRouteMap(track, opts = {}) {
   const el = document.getElementById('marathonRouteMap');
   if (!el || !track?.points?.length || typeof L === 'undefined') return;
 
-  destroyModalRouteMap();
-  document.getElementById('modalCard')?.classList.add('modal-card--wide');
+  // Only tear down the Leaflet map — do not strip chart classes or destroy GPX charts.
+  destroyModalRouteMapOnly();
+  document.getElementById('modalCard')?.classList.add('modal-card--wide', 'modal-card--charts');
 
   const minutes = marathonRouteMinutes(opts);
   const latlngs = track.points.map(p => [p[0], p[1]]);

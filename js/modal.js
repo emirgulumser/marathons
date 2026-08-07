@@ -32,6 +32,7 @@ window.openModal = function openModal(race) {
       </div>
     </div>
     ${marathonRouteSectionHtml()}
+    ${typeof gpxChartsSectionHtml === 'function' ? gpxChartsSectionHtml() : ''}
     <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:10px" id="marathonModalActions">
       <button type="button" class="export-btn" onclick="closeModal();openMarathonTrainingBlock('${race.name.replace(/'/g, "\\'")}',${race.year})">View 12-week build</button>
     </div>`;
@@ -46,6 +47,7 @@ window.openModal = function openModal(race) {
       actions.insertAdjacentHTML('afterbegin',
         `<a class="export-btn" data-gpx-link href="${gpxUrl}" download="${track.sourceFile}">Download GPX</a>`);
     }
+    if (typeof mountGpxCharts === 'function') mountGpxCharts(track);
   });
 };
 

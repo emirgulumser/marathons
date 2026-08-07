@@ -10,7 +10,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-  <link rel="stylesheet" href="css/styles.css?v=20250711-backtest-sort">
+  <link rel="stylesheet" href="css/styles.css?v=20250807-gpx-scroll2">
 </head>
 <body>
 <!-- HEADER -->
@@ -745,6 +745,7 @@
                 <th><input type="checkbox" id="actCompareToggle" title="Compare mode" aria-label="Compare mode"></th>
                 <th>#</th>
                 <th data-col="date">Date</th>
+                <th class="gpx-col" title="GPX route">GPX</th>
                 <th data-col="name">Name</th>
                 <th data-col="type">Type</th>
                 <th data-col="distKm">Distance (km)</th>
@@ -772,8 +773,9 @@
 <script src="js/utils.js?v=20250704"></script>
 <script src="js/store.js?v=20250701"></script>
 <script src="js/theme.js?v=20250701"></script>
-<script src="js/marathon-track.js?v=20250701"></script>
-<script src="js/modal.js?v=20250701"></script>
+<script src="js/marathon-track.js?v=20250807-gpx-scroll2"></script>
+<script src="js/gpx-charts.js?v=20250807-gpx-scroll2"></script>
+<script src="js/modal.js?v=20250807"></script>
 <script src="js/tabs.js?v=20250701"></script>
 <script src="js/export.js?v=20250701"></script>
 <script src="js/goals.js?v=20250701"></script>
@@ -784,7 +786,7 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script type="module" src="js/race-prediction-bridge.js?v=20250705"></script>
 <script src="js/activities-utils.js?v=20250704"></script>
-<script src="js/activities-tab.js?v=20250712"></script>
+<script src="js/activities-tab.js?v=20250807"></script>
 <script src="js/app.js?v=20250704"></script>
 </body>
 </html>

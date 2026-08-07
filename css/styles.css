@@ -263,13 +263,37 @@
       background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
       align-items: center; justify-content: center;
     }
-    .modal-overlay.open { display: flex; }
+    /* Overlay scrolls so tall GPX/detail modals are fully reachable. */
+    .modal-overlay.open {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      overflow-x: hidden;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      padding: 24px 12px;
+    }
     .modal-card {
       background: var(--card); border: 1px solid var(--border); border-radius: 20px;
       padding: 32px; max-width: 420px; width: 90%; position: relative;
       animation: slideUp 0.2s ease;
+      flex-shrink: 0;
+      margin-top: auto;
+      margin-bottom: auto;
     }
     .modal-card.modal-card--wide { max-width: 520px; }
+    .modal-card.modal-card--charts {
+      max-width: min(860px, 96vw);
+      width: 96vw;
+    }
+    .modal-card--charts .modal-close {
+      position: sticky;
+      top: 8px;
+      float: right;
+      z-index: 5;
+    }
     .marathon-route-label {
       font-size: 0.7rem; color: var(--muted); text-transform: uppercase;
       letter-spacing: 0.06em; margin-top: 16px; margin-bottom: 8px;
@@ -281,6 +305,32 @@
     .marathon-route-meta { margin: 8px 0 0; font-size: 0.75rem; }
     .marathon-route-meta a { color: #f97316; text-decoration: none; }
     .marathon-route-meta a:hover { text-decoration: underline; }
+    .gpx-col { width: 2.2rem; text-align: center; }
+    .gpx-cell {
+      display: inline-flex; align-items: center; justify-content: center;
+      color: #f97316; width: 1.4rem;
+    }
+    .gpx-cell--empty { opacity: 0; }
+    .gpx-icon { display: block; }
+    .gpx-charts-cursor {
+      font-size: 0.78rem; margin: 0 0 10px; min-height: 1.2em;
+      font-variant-numeric: tabular-nums;
+    }
+    .gpx-charts-loading { font-size: 0.78rem; margin: 0 0 8px; }
+    .gpx-charts-stack { display: flex; flex-direction: column; gap: 10px; }
+    .gpx-chart-panel {
+      background: var(--card2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 8px 10px 4px;
+    }
+    .gpx-chart-head {
+      display: flex; justify-content: space-between; align-items: baseline;
+      gap: 10px; margin-bottom: 2px;
+    }
+    .gpx-chart-title {
+      font-size: 0.78rem; font-weight: 600; color: var(--text);
+    }
+    .gpx-chart-avg { font-size: 0.72rem; color: var(--muted); }
+    .gpx-chart-canvas-wrap { position: relative; height: 110px; }
     @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     .modal-close {
       position: absolute; top: 16px; right: 16px;
