@@ -1,0 +1,4 @@
+# Garmin raw export (large, personal) — regenerate data/activities.json instead
+DI_CONNECT/
+# Raw marathon GPX (large) — run scripts/import-marathon-gpx.mjs → data/marathon-tracks.json
+data/gpx/

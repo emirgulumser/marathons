@@ -27,6 +27,9 @@ function applyTheme(isDark) {
   if (window.halfTileLayer) {
     window.halfTileLayer.setUrl(isDark ? darkTile : lightTile);
   }
+  if (window.actTileLayer) {
+    window.actTileLayer.setUrl(isDark ? darkTile : lightTile);
+  }
 }
 
 window.toggleTheme = function toggleTheme() {

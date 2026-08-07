@@ -1,5 +1,6 @@
 /** Race detail modals — loaded once, not redefined on tab init. */
 window.openModal = function openModal(race) {
+  destroyModalRouteMap();
   const c = App.countryMap[race.country] || { name: race.country };
   const yearRaces = [...App.races.filter(r => r.year === race.year)].sort((a, b) => a.minutes - b.minutes);
   const yearRank = yearRaces.indexOf(race) + 1;
@@ -29,12 +30,28 @@ window.openModal = function openModal(race) {
         <div class="modal-stat-label">Time bucket</div>
         <div class="modal-stat-val">${race.minutes < 175 ? 'Elite sub-2:55' : race.minutes < 180 ? 'Sub-3:00' : race.minutes < 195 ? 'Strong' : race.minutes < 210 ? 'Solid' : race.minutes < 240 ? 'Steady' : 'Tough day'}</div>
       </div>
+    </div>
+    ${marathonRouteSectionHtml()}
+    <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:10px" id="marathonModalActions">
+      <button type="button" class="export-btn" onclick="closeModal();openMarathonTrainingBlock('${race.name.replace(/'/g, "\\'")}',${race.year})">View 12-week build</button>
     </div>`;
   document.getElementById('modal').classList.add('open');
+
+  loadMarathonTracks().then(tracks => {
+    const track = tracks[marathonRaceKey(race)];
+    if (!track) return;
+    const gpxUrl = mountMarathonRoute(track, { race });
+    const actions = document.getElementById('marathonModalActions');
+    if (gpxUrl && actions && !actions.querySelector('[data-gpx-link]')) {
+      actions.insertAdjacentHTML('afterbegin',
+        `<a class="export-btn" data-gpx-link href="${gpxUrl}" download="${track.sourceFile}">Download GPX</a>`);
+    }
+  });
 };
 
 window.closeModal = function closeModal(e) {
   if (!e || e.target === document.getElementById('modal') || e.target.classList?.contains('modal-close')) {
+    destroyModalRouteMap();
     document.getElementById('modal')?.classList.remove('open');
   }
 };

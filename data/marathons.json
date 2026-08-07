@@ -556,5 +556,14 @@
     "major": false,
     "lat": 59.3,
     "lng": 18.1
+  },
+  {
+    "name": "Rostock Night",
+    "year": 2026,
+    "time": "3:09",
+    "country": "GER",
+    "major": false,
+    "lat": 54.1,
+    "lng": 12.1
   }
 ]

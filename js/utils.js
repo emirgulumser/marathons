@@ -1,6 +1,10 @@
 
 const parseTime = t => { const [h,m] = t.split(':').map(Number); return h*60+m; };
-const fmtTime   = m => `${Math.floor(m/60)}:${(m%60).toString().padStart(2,'0')}`;
+const fmtTime   = m => {
+  if (m == null || !Number.isFinite(m)) return '—';
+  const rounded = Math.round(m);
+  return `${Math.floor(rounded / 60)}:${String(rounded % 60).padStart(2, '0')}`;
+};
 const timeColor = m => m<175?'#fbbf24': m<180?'#22c55e': m<195?'#86efac': m>=240?'#ef4444':'#3b82f6';
 
 /** ISO 3166-1 alpha-2 for flag images (emoji flags are unreliable on Windows). */

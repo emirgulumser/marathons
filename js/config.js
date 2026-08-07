@@ -2,4 +2,4 @@
 window.APP_ROOT = new URL('./', document.baseURI).href;
 
 /** Bump when deploying to bust browser cache. */
-window.APP_VERSION = '20250603';
+window.APP_VERSION = '20250704';

@@ -29,7 +29,9 @@ Then visit `http://localhost:8080`.
 │   ├── trails.json
 │   ├── training.json
 │   ├── countries.json
-│   └── goals.json
+│   ├── goals.json
+│   └── activities.json     # Generated from Garmin export
+│   └── marathon-tracks.json # Simplified routes from marathon GPX files
 └── js/
     ├── app.js              # Bootstrap
     ├── store.js            # Load data, compute stats
@@ -37,11 +39,26 @@ Then visit `http://localhost:8080`.
     ├── tabs.js             # Lazy tab loading
     ├── export.js           # CSV export
     ├── goals.js            # Milestones UI
+    ├── activities-utils.js # Activities filters & aggregates
+    ├── activities-tab.js   # Garmin Activities tab
     ├── marathons-tab.js
     ├── half-tab.js
     ├── training-tab.js
     └── trail-tab.js
 ```
+
+## Garmin activities import
+
+1. Export your data from [Garmin Connect](https://connect.garmin.com) (Account → Export Data) and extract to `DI_CONNECT/`.
+2. Run the import script:
+
+```bash
+node scripts/import-garmin.mjs
+```
+
+This regenerates `data/activities.json` with activities, PRs, daily heatmap data, race matching, and Garmin-vs-training comparison. Commit `data/activities.json` — do **not** commit `DI_CONNECT/` (it is gitignored).
+
+Optional: add device display names in `DEVICE_NAMES` inside `scripts/import-garmin.mjs`.
 
 ## Adding a marathon
 
@@ -72,6 +89,9 @@ Push to `main` — the GitHub Actions workflow in `.github/workflows/pages.yml` 
 ## Scripts
 
 ```bash
+node scripts/import-garmin.mjs  # Import Garmin DI_CONNECT export → data/activities.json
+node scripts/import-marathon-gpx.mjs  # GPX in data/gpx/marathons/ → data/marathon-tracks.json
 node scripts/extract-data.mjs   # Regenerate JSON from monolith backup (legacy)
 node scripts/build-index.mjs    # Rebuild index.html from monolith backup
+node scripts/test-load.mjs      # Verify JS bundles load locally
 ```

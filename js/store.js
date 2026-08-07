@@ -8,6 +8,9 @@ window.App = {
   countryData: [],
   countryMap: {},
   goals: null,
+  activities: [],
+  activityMeta: null,
+  activitySummary: null,
   stats: {},
 };
 
@@ -96,5 +99,15 @@ window.loadAppData = async function loadAppData() {
     .sort((a, b) => b.count - a.count);
 
   computeStats();
+  return App;
+};
+
+window.loadActivities = async function loadActivities() {
+  if (App._activitiesLoaded) return App;
+  const payload = await loadJSON('data/activities.json');
+  App.activityMeta = payload.meta || null;
+  App.activities = payload.activities || [];
+  App.activitySummary = payload.summary || null;
+  App._activitiesLoaded = true;
   return App;
 };
