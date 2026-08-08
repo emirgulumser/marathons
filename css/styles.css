@@ -757,7 +757,10 @@
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
     }
     .predict-compare-label { display: block; font-size: 0.72rem; color: var(--muted); margin-bottom: 4px; }
-    .predict-err-good { color: #22c55e; }
+    .predict-err-good,
+    .predict-err-mid,
+    .predict-err-bad { color: inherit; font-weight: 700; }
+    #actPredictBacktestTable td.time-cell { color: var(--text); font-weight: 700; }
     .predict-backtest-pager {
       display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
       margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);

@@ -247,7 +247,7 @@ window.initActivitiesTab = async function () {
       <div class="predict-compare-grid">
         <div><span class="predict-compare-label">Predicted</span><strong>${fmtTime(pred.marathon.minutes)}</strong></div>
         <div><span class="predict-compare-label">Actual</span><strong>${fmtTime(race.raceMinutes)}</strong></div>
-        <div><span class="predict-compare-label">Error</span><strong class="${Math.abs(err) <= 5 ? 'predict-err-good' : ''}" title="Negative = faster than predicted">${err > 0 ? '+' : ''}${err} min</strong></div>
+        <div><span class="predict-compare-label">Error</span><strong title="Negative = faster than predicted">${err > 0 ? '+' : ''}${err} min</strong></div>
       </div>
       ${act ? `<button type="button" class="filter-btn" id="actPredictRaceActBtn" style="margin-top:12px">View race activity</button>` : ''}`;
     document.getElementById('actPredictRaceActBtn')?.addEventListener('click', () => openActModal(act));
@@ -314,6 +314,32 @@ window.initActivitiesTab = async function () {
     return best;
   }
 
+  /** Map a YMD date onto the category axis (fractional index). Null if far outside range. */
+  function dateToTimelineX(labels, date) {
+    if (!labels.length || !date) return null;
+    const t = new Date(date + 'T12:00:00').getTime();
+    if (!Number.isFinite(t)) return null;
+    const times = labels.map(d => new Date(d + 'T12:00:00').getTime());
+    const first = times[0];
+    const last = times[times.length - 1];
+    const day = 86400000;
+    // Allow a short overhang past the last monthly point (recent races).
+    if (t < first - 20 * day || t > last + 45 * day) return null;
+    if (t <= first) return 0;
+    if (t >= last) {
+      if (times.length < 2) return times.length - 1;
+      const span = last - times[times.length - 2] || day * 30;
+      return (times.length - 1) + (t - last) / span;
+    }
+    for (let i = 0; i < times.length - 1; i++) {
+      if (t >= times[i] && t <= times[i + 1]) {
+        const span = times[i + 1] - times[i] || day;
+        return i + (t - times[i]) / span;
+      }
+    }
+    return times.length - 1;
+  }
+
   function renderPredictTimeline(selectedDate) {
     const canvas = document.getElementById('actPredictTimelineChart');
     if (!canvas || !racePredictions) return;
@@ -321,13 +347,18 @@ window.initActivitiesTab = async function () {
     const labels = timeline.map(p => p.date);
     const values = timeline.map(p => p.marathonMinutes);
     const actuals = (summary.marathonBlocks || [])
-      .filter(b => b.raceMinutes != null)
-      .map(b => ({
-        x: closestTimelineIndex(labels, b.raceDate),
-        y: b.raceMinutes,
-        label: `${b.raceName} ${b.raceYear}`,
-      }))
-      .filter(p => p.x >= 0);
+      .filter(b => b.raceMinutes != null && b.raceDate)
+      .map(b => {
+        const x = dateToTimelineX(labels, b.raceDate);
+        if (x == null) return null;
+        return {
+          x,
+          y: b.raceMinutes,
+          label: `${b.raceName} ${b.raceYear}`,
+          raceDate: b.raceDate,
+        };
+      })
+      .filter(Boolean);
     const selectedIdx = closestTimelineIndex(labels, selectedDate);
     const annotations = selectedIdx >= 0 ? {
       selectedDate: {
@@ -340,6 +371,55 @@ window.initActivitiesTab = async function () {
         label: { display: true, content: selectedDate, position: 'start', color: '#f97316', font: { size: 10 } },
       },
     } : {};
+
+    const timelineOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      // nearest-by-x: scatter points use {x,y}; index mode wrongly used array index
+      interaction: { mode: 'nearest', axis: 'x', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#8b949e' } },
+        tooltip: {
+          backgroundColor: '#1f2937',
+          callbacks: {
+            title(items) {
+              if (!items.length) return '';
+              const actual = items.find(i => i.dataset.type === 'scatter' || i.dataset.label === 'Actual marathon');
+              if (actual?.raw?.raceDate) {
+                return `${actual.raw.label} · ${actual.raw.raceDate}`;
+              }
+              return items[0].label || '';
+            },
+            label(ctx) {
+              if (ctx.dataset.label === 'Actual marathon') {
+                return ` Actual: ${fmtTime(ctx.raw.y)}`;
+              }
+              const mins = typeof ctx.raw === 'number' ? ctx.raw : ctx.parsed?.y;
+              return mins != null ? ` Predicted: ${fmtTime(mins)}` : '';
+            },
+            filter(ctx) {
+              // Drop empty / null predicted points
+              if (ctx.dataset.label === 'Predicted marathon') {
+                return ctx.raw != null && ctx.raw !== '';
+              }
+              return true;
+            },
+          },
+        },
+        annotation: { annotations },
+      },
+      scales: {
+        x: {
+          ticks: { color: '#8b949e', maxTicksLimit: 12 },
+          grid: { display: false },
+        },
+        y: {
+          ticks: { color: '#8b949e', callback: v => fmtTime(v) },
+          grid: { color: 'rgba(255,255,255,0.05)' },
+          title: { display: true, text: 'Finish time', color: '#8b949e' },
+        },
+      },
+    };
 
     if (!charts.predictTimeline) {
       charts.predictTimeline = new Chart(canvas.getContext('2d'), {
@@ -354,8 +434,9 @@ window.initActivitiesTab = async function () {
               backgroundColor: 'rgba(59,130,246,0.1)',
               fill: true,
               tension: 0.2,
-              pointRadius: 0,
-              pointHitRadius: 8,
+              pointRadius: 2,
+              pointHoverRadius: 5,
+              pointHitRadius: 16,
             },
             {
               type: 'scatter',
@@ -365,46 +446,19 @@ window.initActivitiesTab = async function () {
               borderColor: '#22c55e',
               pointRadius: 5,
               pointHoverRadius: 8,
+              pointHitRadius: 12,
               parsing: false,
             },
           ],
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: { mode: 'index', intersect: false },
-          plugins: {
-            legend: { labels: { color: '#8b949e' } },
-            tooltip: {
-              backgroundColor: '#1f2937',
-              callbacks: {
-                label: ctx => {
-                  if (ctx.dataset.label === 'Actual marathon') {
-                    return ` ${ctx.raw.label}: ${fmtTime(ctx.raw.y)}`;
-                  }
-                  return ` Predicted: ${fmtTime(ctx.raw)}`;
-                },
-              },
-            },
-            annotation: { annotations },
-          },
-          scales: {
-            x: {
-              ticks: { color: '#8b949e', maxTicksLimit: 12 },
-              grid: { display: false },
-            },
-            y: {
-              ticks: { color: '#8b949e', callback: v => fmtTime(v) },
-              grid: { color: 'rgba(255,255,255,0.05)' },
-              title: { display: true, text: 'Finish time', color: '#8b949e' },
-            },
-          },
-        },
+        options: timelineOptions,
       });
     } else {
       charts.predictTimeline.data.labels = labels;
       charts.predictTimeline.data.datasets[0].data = values;
       charts.predictTimeline.data.datasets[1].data = actuals;
+      charts.predictTimeline.options.interaction = timelineOptions.interaction;
+      charts.predictTimeline.options.plugins.tooltip = timelineOptions.plugins.tooltip;
       charts.predictTimeline.options.plugins.annotation.annotations = annotations;
       charts.predictTimeline.update();
     }
@@ -466,14 +520,13 @@ window.initActivitiesTab = async function () {
 
     tbody.innerHTML = slice.map(row => {
       const err = row.errorMin;
-      const errCls = err == null ? '' : Math.abs(err) <= 5 ? 'predict-err-good' : Math.abs(err) > 15 ? 'warn-row' : '';
       const errTxt = err == null ? '—' : `${err > 0 ? '+' : ''}${err} min`;
       return `<tr class="predict-backtest-row" data-predict-date="${row.predictDate}" data-race-key="${row.key}" style="cursor:pointer">
         <td>${row.raceName} ${row.raceYear}</td>
         <td>${row.predictDate}</td>
-        <td>${row.predictedMinutes != null ? fmtTime(row.predictedMinutes) : '—'}</td>
-        <td>${fmtTime(row.actualMinutes)}</td>
-        <td class="${errCls}">${errTxt}</td>
+        <td class="time-cell">${row.predictedMinutes != null ? fmtTime(row.predictedMinutes) : '—'}</td>
+        <td class="time-cell">${fmtTime(row.actualMinutes)}</td>
+        <td class="time-cell">${errTxt}</td>
       </tr>`;
     }).join('');
     tbody.querySelectorAll('.predict-backtest-row').forEach(tr => {
