@@ -1,17 +1,12 @@
-# Garmin raw export (large, personal) — regenerate data/activities.json instead
+# Bulky raw Garmin Connect dumps (re-import locally if needed)
 DI_CONNECT/
 garmin_data/
+
+# Prefer FIT under data/fits/; keep loose root zips and legacy GPX out
 *.zip
-
-# Generated personal user data — do not commit
-data/activities.json
-data/marathon-tracks.json
-data/activity-details/
-data/fits/
-data/*.zip
-data/*.fit
-
-# Race-day weather JSON is app data (commit it). Raw FIT/GPX stays private.
+!data/fits/
+!data/fits/**/
+!data/fits/**/*.zip
 data/gpx/
 
 # OS / editor
