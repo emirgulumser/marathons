@@ -21,9 +21,18 @@ window.loadMarathonTracks = async function loadMarathonTracks() {
   return App.marathonTracks;
 };
 
-window.marathonGpxUrl = function marathonGpxUrl(track) {
+/** File URL for original Garmin export (FIT zip/fit), if present locally. */
+window.marathonSourceUrl = function marathonSourceUrl(track) {
   if (!track?.sourceFile) return null;
-  return dataUrl(`data/gpx/marathons/${track.sourceFile}`);
+  const dir = track.sourceFormat === 'fit' || /\.(zip|fit)$/i.test(track.sourceFile)
+    ? 'data/fits/marathons'
+    : 'data/gpx/marathons';
+  return dataUrl(`${dir}/${track.sourceFile}`);
+};
+
+/** @deprecated use marathonSourceUrl */
+window.marathonGpxUrl = function marathonGpxUrl(track) {
+  return marathonSourceUrl(track);
 };
 
 window.trackForRace = function trackForRace(race) {
@@ -40,6 +49,19 @@ window.trackForActivity = function trackForActivity(a) {
 
 window.trackForMarathon = function trackForMarathon(name, year) {
   return App.marathonTracks?.[marathonRaceKeyFromParts(name, year)] || null;
+};
+
+/** Build activity detail page URL (Garmin-style separate page). */
+window.activityPageUrl = function activityPageUrl({ activityId, raceName, raceYear, race } = {}) {
+  const q = new URLSearchParams();
+  const id = activityId || null;
+  const name = raceName || race?.name || null;
+  const year = raceYear || race?.year || null;
+  if (id) q.set('id', id);
+  if (name) q.set('race', name);
+  if (year) q.set('year', year);
+  const qs = q.toString();
+  return qs ? `activity.html?${qs}` : 'activity.html';
 };
 
 window.marathonRouteMinutes = function marathonRouteMinutes(opts = {}) {
@@ -111,12 +133,12 @@ window.mountMarathonRoute = function mountMarathonRoute(track, opts = {}) {
   const section = document.getElementById('marathonRouteSection');
   const meta = document.getElementById('marathonRouteMeta');
   if (section) section.hidden = false;
-  const gpxUrl = marathonGpxUrl(track);
+  const gpxUrl = marathonSourceUrl(track);
   if (meta) {
-    const gpxLink = gpxUrl
-      ? ` · <a href="${gpxUrl}" download="${track.sourceFile}">Download GPX</a>`
+    const link = gpxUrl
+      ? ` · <a href="${gpxUrl}" download="${track.sourceFile}">Download ${track.sourceFormat === 'fit' || /\.zip$/i.test(track.sourceFile) ? 'FIT' : 'GPX'}</a>`
       : '';
-    meta.innerHTML = `${track.distKm} km logged · ${track.simplifiedCount.toLocaleString()} points on map${gpxLink}`;
+    meta.innerHTML = `${track.distKm} km logged · ${track.simplifiedCount.toLocaleString()} points on map${link}`;
   }
   requestAnimationFrame(() => renderModalRouteMap(track, opts));
   return gpxUrl;

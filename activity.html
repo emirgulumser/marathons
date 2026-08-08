@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Activity — Marathon Log</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <link rel="stylesheet" href="css/styles.css?v=20260808-split">
+</head>
+<body class="activity-page-body">
+  <header class="gc-topbar">
+    <a class="gc-back" href="index.html">← Back to log</a>
+    <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
+  </header>
+
+  <div id="gcStatus" class="gc-status">Loading activity…</div>
+
+  <div id="gcPage" class="gc-page" hidden>
+    <div class="gc-map-wrap">
+      <div id="gcMap" class="gc-map" role="img" aria-label="Activity route map"></div>
+      <div class="gc-map-scrub" id="gcMapScrub" hidden></div>
+    </div>
+
+    <div class="gc-panel">
+      <div class="gc-head">
+        <div class="gc-flag" id="gcFlag"></div>
+        <div>
+          <h1 class="gc-title" id="gcTitle">—</h1>
+          <p class="gc-sub" id="gcSub">—</p>
+        </div>
+      </div>
+
+      <div class="gc-hero-stats" id="gcHeroStats"></div>
+      <div class="gc-split-card" id="gcSplitCard" hidden>
+        <div class="gc-split-main">
+          <div class="gc-split-badge" id="gcSplitBadge">—</div>
+          <div class="gc-split-score-wrap">
+            <div class="gc-split-score" id="gcSplitScore">—</div>
+            <div class="gc-split-score-label">Pacing score</div>
+          </div>
+        </div>
+        <div class="gc-split-halves" id="gcSplitHalves"></div>
+        <p class="gc-split-note muted-text" id="gcSplitNote"></p>
+      </div>
+      <div class="gc-sec-stats" id="gcSecStats"></div>
+
+      <div class="gc-charts-block">
+        <div class="gc-charts-head">
+          <span class="gc-charts-label">Charts</span>
+          <span class="gc-charts-cursor muted-text" id="gcChartsCursor">Hover charts to inspect</span>
+        </div>
+        <p class="gc-charts-note muted-text" id="gcChartsNote" hidden></p>
+        <div id="gcChartsStack" class="gc-charts-stack"></div>
+      </div>
+
+      <div class="gc-splits-block" id="gcSplitsBlock" hidden>
+        <div class="gc-charts-label">Splits (km)</div>
+        <div class="table-wrap">
+          <table class="gc-splits-table">
+            <thead>
+              <tr>
+                <th>Km</th>
+                <th>Split</th>
+                <th>Pace</th>
+                <th>Elev</th>
+                <th>Avg HR</th>
+              </tr>
+            </thead>
+            <tbody id="gcSplitsBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="gc-actions" id="gcActions"></div>
+    </div>
+  </div>
+
+  <script src="js/config.js?v=20260808-split"></script>
+  <script src="js/utils.js?v=20260808-split"></script>
+  <script src="js/store.js?v=20260808-split"></script>
+  <script src="js/theme.js?v=20260808-split"></script>
+  <script src="js/marathon-track.js?v=20260808-split"></script>
+  <script src="js/gpx-charts.js?v=20260808-split"></script>
+  <script src="js/activity-page.js?v=20260808-split"></script>
+</body>
+</html>

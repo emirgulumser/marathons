@@ -1707,8 +1707,9 @@ window.initActivitiesTab = async function () {
       ${similar.length ? `<div class="similar-runs"><div class="section-title" style="font-size:0.9rem;margin-top:12px">Similar runs</div>${similar.map(s => `<div class="similar-run-item" data-id="${s.id}">${s.date} · ${s.distKm} km · ${U.fmtPace(s.paceMinKm)}</div>`).join('')}</div>` : ''}
       <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:10px" id="actModalActions">
         ${raceActions}
+        <a class="export-btn" id="actModalActivityPage" hidden>Open activity page</a>
         <a class="export-btn" href="${a.garminUrl}" target="_blank" rel="noopener">View on Garmin</a>
-        <a class="export-btn" id="actModalGpxLink" hidden download>Download GPX</a>
+        <a class="export-btn" id="actModalGpxLink" hidden download>Download FIT</a>
       </div>`;
     document.querySelectorAll('.similar-run-item').forEach(el => {
       el.onclick = () => openActModal(findActivity(Number(el.dataset.id)));
@@ -1720,6 +1721,15 @@ window.initActivitiesTab = async function () {
       const track = trackForActivity(a);
       if (!track) return;
       const gpxUrl = mountMarathonRoute(track, { activity: a });
+      const pageLink = document.getElementById('actModalActivityPage');
+      if (pageLink && typeof activityPageUrl === 'function') {
+        pageLink.href = activityPageUrl({
+          activityId: track.activityId || a.id,
+          raceName: track.raceName,
+          raceYear: track.raceYear,
+        });
+        pageLink.hidden = false;
+      }
       const gpxLink = document.getElementById('actModalGpxLink');
       if (gpxLink && gpxUrl) {
         gpxLink.href = gpxUrl;

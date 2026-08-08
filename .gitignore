@@ -6,12 +6,12 @@ garmin_data/
 # Generated personal user data — do not commit
 data/activities.json
 data/marathon-tracks.json
-data/race-weather.json
-data/race-weather-overrides.json
-data/race-activity-overrides.json
-data/race-start-times.json
+data/activity-details/
+data/fits/
+data/*.zip
+data/*.fit
 
-# Raw marathon GPX (large) — run scripts/import-marathon-gpx.mjs → data/marathon-tracks.json
+# Race-day weather JSON is app data (commit it). Raw FIT/GPX stays private.
 data/gpx/
 
 # OS / editor
@@ -20,6 +20,8 @@ data/gpx/
 .idea/
 .vscode/
 .merge-backup/
+.fit-tmp-*/
 
 # Legacy monolith backup
 index.monolith.bak
+node_modules/

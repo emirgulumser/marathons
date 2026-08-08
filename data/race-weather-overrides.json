@@ -1,0 +1,61 @@
+{
+  "Boston|2018": {
+    "tempC": 3.8,
+    "tempMin": 2.5,
+    "tempMax": 6.1,
+    "humidity": 96,
+    "windKph": 42,
+    "windMaxKph": 72,
+    "rainMm": 38,
+    "source": "Logan Airport 1.57 in (40 mm) daily; NWS heavy rain peak 10am–3pm during race — constant downpours"
+  },
+  "Stockholm|2026": {
+    "tempMax": 24,
+    "tempMin": 20,
+    "tempC": 22.5,
+    "humidity": 48,
+    "weatherCode": 0,
+    "conditions": "Clear",
+    "source": "Race day: sun broke through at start (forecast had been overcast); ~20–24°C on course — felt overwhelmingly hot for marathoners"
+  },
+  "Stockholm|2019": {
+    "tempC": 14,
+    "tempMin": 13,
+    "tempMax": 14.5,
+    "humidity": 70,
+    "windKph": 18,
+    "rainMm": 1.5,
+    "source": "Official race history: ~14°C, cloudy, windy (blåsig), partial rain (Jun 1 2019)"
+  },
+  "Chitose|2025": {
+    "tempC": 23,
+    "tempMin": 19,
+    "tempMax": 25,
+    "humidity": 55,
+    "windKph": 6,
+    "source": "JMA Chitose AMEDAS peak 23.3°C (Jun 1 2025); sunny exposed course felt warmer per runner reports"
+  },
+  "Bergen|2026": {
+    "tempC": 5.5,
+    "tempMin": 4.5,
+    "tempMax": 7,
+    "humidity": 88,
+    "windKph": 24,
+    "windMaxKph": 32,
+    "rainMm": 2.5,
+    "weatherCode": 51,
+    "conditions": "Rain",
+    "source": "Coastal cold + damp morning drizzle and wind on Bryggen hills; Open-Meteo undercounted wet start"
+  },
+  "Spitsbergen|2023": {
+    "tempC": -0.5,
+    "tempMin": -1.5,
+    "tempMax": 1,
+    "humidity": 72,
+    "windKph": 24,
+    "windMaxKph": 38,
+    "weatherCode": 1,
+    "conditions": "Mainly clear",
+    "source": "Race reports: ~0°C feels-like with sun; tough headwind on coal-mine loops; Open-Meteo wind unrealistically calm for Longyearbyen valley"
+  }
+}

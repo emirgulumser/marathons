@@ -544,15 +544,28 @@ function renderTable(){
   list.forEach((r,i)=>{
     const c = App.countryMap[r.country]||{name:r.country};
     const tc = r.minutes<180?'sub3':r.minutes<195?'fast':r.minutes>=240?'tough':'';
+    const track = typeof trackForRace === 'function' ? trackForRace(r) : null;
+    const actHref = track && typeof activityPageUrl === 'function'
+      ? activityPageUrl({ activityId: track.activityId, raceName: r.name, raceYear: r.year })
+      : null;
+    const actCell = actHref
+      ? `<a class="export-btn race-activity-btn" href="${actHref}" title="Open activity page">Open</a>`
+      : `<span style="color:var(--muted)">—</span>`;
     const tr = document.createElement('tr');
-    tr.onclick = ()=>openModal(r);
+    tr.onclick = (e) => {
+      if (e.target.closest('a,button')) return;
+      openModal(r);
+    };
     tr.innerHTML=`
       <td style="color:var(--muted)">${i+1}</td>
       <td><span class="cell-flag-label">${flagImgHtml(r.country, 18)}<span>${r.name}${r.major?` <span class="major-badge">⭐</span>`:''}</span></span></td>
       <td>${r.year}</td>
       <td><span class="cell-flag-label">${flagImgHtml(r.country, 22)}<span>${c.name}</span></span></td>
       <td class="time-cell ${tc}">${r.time}</td>
-      <td style="color:var(--muted);font-size:0.8rem">#${r.rank} fastest</td>`;
+      <td>${typeof RaceWeather !== 'undefined' ? RaceWeather.weatherCell(r) : '—'}</td>
+      <td>${typeof RaceWeather !== 'undefined' ? RaceWeather.difficultyBadge(r) : '—'}</td>
+      <td style="color:var(--muted);font-size:0.8rem">#${r.rank} fastest</td>
+      <td>${actCell}</td>`;
     tbody.appendChild(tr);
   });
 }
@@ -574,6 +587,9 @@ document.querySelectorAll('.filter-btn').forEach(btn=>{
 document.getElementById('searchInput').addEventListener('input',e=>{ searchQuery=e.target.value; renderTable(); });
 
 renderTable();
+if (typeof loadMarathonTracks === 'function') {
+  loadMarathonTracks().then(() => renderTable());
+}
 
   // ── Latitude charts ───────────────────────────────────
   {

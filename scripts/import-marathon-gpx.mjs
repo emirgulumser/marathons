@@ -110,6 +110,155 @@ function trackDistanceKm(points) {
   return Math.round(km * 100) / 100;
 }
 
+function elevStats(points) {
+  let gain = 0;
+  let loss = 0;
+  let min = null;
+  let max = null;
+  for (let i = 0; i < points.length; i++) {
+    const ele = points[i][2];
+    if (!Number.isFinite(ele)) continue;
+    if (min == null || ele < min) min = ele;
+    if (max == null || ele > max) max = ele;
+    if (i > 0 && Number.isFinite(points[i - 1][2])) {
+      const d = ele - points[i - 1][2];
+      if (d > 0.5) gain += d;
+      else if (d < -0.5) loss += -d;
+    }
+  }
+  return {
+    elevGainM: Math.round(gain),
+    elevLossM: Math.round(loss),
+    minElev: min != null ? Math.round(min) : null,
+    maxElev: max != null ? Math.round(max) : null,
+  };
+}
+
+/** Downsampled chart series for activity.html (HR/pace/cad/GCT when present in GPX). */
+function parseGpxDetailSeries(xml, maxPoints = 700) {
+  const raw = [];
+  const re = /<trkpt\s+lat="([^"]+)"\s+lon="([^"]+)"[^>]*>([\s\S]*?)<\/trkpt>/gi;
+  let m;
+  const num = (block, patterns) => {
+    for (const p of patterns) {
+      const mm = block.match(p);
+      if (mm && mm[1] !== '') {
+        const v = parseFloat(mm[1]);
+        if (Number.isFinite(v)) return v;
+      }
+    }
+    return null;
+  };
+  while ((m = re.exec(xml)) != null) {
+    const lat = parseFloat(m[1]);
+    const lng = parseFloat(m[2]);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+    const block = m[3];
+    const timeM = block.match(/<time>([^<]*)<\/time>/i);
+    const t = timeM ? Date.parse(timeM[1]) : NaN;
+    raw.push({
+      lat, lng,
+      ele: num(block, [/<ele>([^<]*)<\/ele>/i]),
+      t: Number.isFinite(t) ? t : null,
+      hr: num(block, [/<(?:[\w.]+:)?hr>([^<]*)<\/(?:[\w.]+:)?hr>/i]),
+      cad: num(block, [/<(?:[\w.]+:)?cad>([^<]*)<\/(?:[\w.]+:)?cad>/i]),
+      gct: num(block, [/<(?:[\w.]+:)?groundcontacttime>([^<]*)<\/(?:[\w.]+:)?groundcontacttime>/i]),
+      vo: num(block, [/<(?:[\w.]+:)?verticaloscillation>([^<]*)<\/(?:[\w.]+:)?verticaloscillation>/i]),
+      power: num(block, [/<(?:[\w.]+:)?power>([^<]*)<\/(?:[\w.]+:)?power>/i]),
+      temp: num(block, [/<(?:[\w.]+:)?atemp>([^<]*)<\/(?:[\w.]+:)?atemp>/i]),
+    });
+  }
+  if (raw.length < 2) return null;
+
+  const t0 = raw.find(p => p.t != null)?.t ?? 0;
+  let distKm = 0;
+  let elevGain = 0;
+  let elevLoss = 0;
+  const built = [];
+  for (let i = 0; i < raw.length; i++) {
+    const p = raw[i];
+    if (i > 0) {
+      distKm += haversineKm(raw[i - 1].lat, raw[i - 1].lng, p.lat, p.lng);
+      if (p.ele != null && raw[i - 1].ele != null) {
+        const d = p.ele - raw[i - 1].ele;
+        if (d > 0.5) elevGain += d;
+        else if (d < -0.5) elevLoss += -d;
+      }
+    }
+    let pace = null;
+    if (i > 0 && p.t != null && raw[i - 1].t != null) {
+      const dKm = haversineKm(raw[i - 1].lat, raw[i - 1].lng, p.lat, p.lng);
+      const dtMin = (p.t - raw[i - 1].t) / 60000;
+      if (dKm > 0.0005 && dtMin > 0) {
+        pace = dtMin / dKm;
+        if (pace < 2.5 || pace > 15) pace = null;
+      }
+    }
+    built.push({
+      elapsedSec: p.t != null ? (p.t - t0) / 1000 : i,
+      distKm: Math.round(distKm * 1000) / 1000,
+      ele: p.ele,
+      pace,
+      hr: p.hr,
+      cad: p.cad != null ? (p.cad < 120 ? p.cad * 2 : p.cad) : null,
+      gct: p.gct,
+      vo: p.vo,
+      power: p.power,
+      temp: p.temp,
+      lat: p.lat,
+      lng: p.lng,
+    });
+  }
+
+  let series = built;
+  if (series.length > maxPoints) {
+    const step = Math.ceil(series.length / maxPoints);
+    series = series.filter((_, i) => i % step === 0 || i === series.length - 1);
+  }
+
+  const avg = (key) => {
+    const vals = series.map(p => p[key]).filter(v => v != null);
+    if (!vals.length) return null;
+    return Math.round((vals.reduce((s, v) => s + v, 0) / vals.length) * 10) / 10;
+  };
+  const max = (key) => {
+    const vals = series.map(p => p[key]).filter(v => v != null);
+    return vals.length ? Math.round(Math.max(...vals) * 10) / 10 : null;
+  };
+  const min = (key) => {
+    const vals = series.map(p => p[key]).filter(v => v != null);
+    return vals.length ? Math.round(Math.min(...vals) * 10) / 10 : null;
+  };
+
+  return {
+    series,
+    summary: {
+      distKm: series[series.length - 1]?.distKm ?? 0,
+      durationSec: Math.round(series[series.length - 1]?.elapsedSec ?? 0),
+      elevGainM: Math.round(elevGain),
+      elevLossM: Math.round(elevLoss),
+      minElev: min('ele'),
+      maxElev: max('ele'),
+      avgPace: avg('pace'),
+      avgHr: avg('hr'),
+      maxHr: max('hr'),
+      avgCad: avg('cad'),
+      avgGct: avg('gct'),
+      avgVo: avg('vo'),
+      avgPower: avg('power'),
+      avgTemp: avg('temp'),
+    },
+  };
+}
+
+function writeActivityDetails(activityId, detail) {
+  const dir = path.join(root, 'data', 'activity-details');
+  fs.mkdirSync(dir, { recursive: true });
+  const out = path.join(dir, `${activityId}.json`);
+  fs.writeFileSync(out, `${JSON.stringify(detail)}\n`);
+  return out;
+}
+
 function loadExistingTracks() {
   if (!fs.existsSync(outPath)) return {};
   try {
@@ -121,16 +270,15 @@ function loadExistingTracks() {
 }
 
 function main() {
-  if (!fs.existsSync(activitiesPath)) {
-    console.error('Missing data/activities.json — run import-garmin.mjs first');
-    process.exit(1);
-  }
   if (!fs.existsSync(gpxDir)) {
     console.error(`GPX folder not found: ${gpxDir}`);
+    console.error('Export GPX from Garmin Connect → data/gpx/marathons/activity_{id}.gpx');
     process.exit(1);
   }
 
-  const { activities } = JSON.parse(fs.readFileSync(activitiesPath, 'utf8'));
+  const activities = fs.existsSync(activitiesPath)
+    ? JSON.parse(fs.readFileSync(activitiesPath, 'utf8')).activities || []
+    : [];
   const marathons = JSON.parse(fs.readFileSync(marathonsPath, 'utf8'));
   const byId = new Map(activities.map(a => [a.id, a]));
   const tracks = loadExistingTracks();
@@ -177,7 +325,7 @@ function main() {
       const race = matchRaceFromGpx(meta, marathons);
       if (!race) {
         const why = !act
-          ? `no activity ${activityId} in activities.json`
+          ? `no activity ${activityId} in activities.json and no race match from GPX`
           : act.raceLink?.status === 'unlogged'
             ? 'unlogged marathon (not in marathons.json)'
             : 'not a matched marathon';
@@ -193,6 +341,7 @@ function main() {
     }
 
     const points = downsample(allPoints);
+    const elev = elevStats(allPoints);
     tracks[key] = {
       activityId,
       raceKey: key,
@@ -204,8 +353,37 @@ function main() {
       sourceFile: file,
       pointCount: allPoints.length,
       simplifiedCount: points.length,
+      ...elev,
       points,
     };
+
+    const detail = parseGpxDetailSeries(raw);
+    if (detail) {
+      const detailPath = writeActivityDetails(activityId, {
+        activityId,
+        raceKey: key,
+        raceName,
+        raceYear,
+        date,
+        sourceFile: file,
+        ...detail,
+        summary: {
+          ...detail.summary,
+          ...elev,
+          distKm: act?.distKm ?? detail.summary.distKm,
+          durationSec: act?.durationSec ?? detail.summary.durationSec,
+          avgHr: act?.avgHr ?? detail.summary.avgHr,
+          maxHr: act?.maxHr ?? detail.summary.maxHr,
+          avgCadence: act?.avgCadence ?? detail.summary.avgCad,
+          avgPower: act?.avgPower ?? detail.summary.avgPower,
+          avgGct: act?.avgGct ?? detail.summary.avgGct,
+          avgVerticalOsc: act?.avgVerticalOsc ?? detail.summary.avgVo,
+          calories: act?.calories ?? null,
+        },
+      });
+      console.log(`  ↳ charts ${detailPath} (${detail.series.length} pts)`);
+    }
+
     added += 1;
     console.log(`✓ ${key} — ${allPoints.length} pts → ${points.length} (${file}, ${via})`);
   }

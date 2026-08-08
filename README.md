@@ -31,7 +31,8 @@ Then visit `http://localhost:8080`.
 │   ├── countries.json
 │   ├── goals.json
 │   ├── activities.json      # Generated locally from Garmin (gitignored)
-│   └── marathon-tracks.json # Generated locally from GPX (gitignored)
+│   ├── marathon-tracks.json # From FIT import (gitignored)
+│   └── fits/marathons/      # Garmin ZIP/FIT exports (gitignored)
 └── js/
     ├── app.js              # Bootstrap
     ├── store.js            # Load data, compute stats
@@ -59,6 +60,27 @@ node scripts/import-garmin.mjs
 This regenerates `data/activities.json` with activities, PRs, daily heatmap data, race matching, and Garmin-vs-training comparison. Keep `data/activities.json` and `data/marathon-tracks.json` local only — they are gitignored. Do **not** commit `DI_CONNECT/` either.
 
 Optional: add device display names in `DEVICE_NAMES` inside `scripts/import-garmin.mjs`.
+
+## Activity GPS page
+
+Marathons with imported FIT open a Garmin-style detail page:
+
+```text
+activity.html?id=23816379030
+activity.html?race=Rostock%20Night&year=2026
+```
+
+For full charts (HR, cadence, ground contact, power, elevation, pace):
+
+1. In Garmin Connect → activity → export **Original** (ZIP containing `.fit`)
+2. Save as `data/{id}.zip` or `data/fits/marathons/{id}.zip`
+3. Run:
+
+```bash
+node scripts/import-marathon-fit.mjs
+```
+
+That updates `data/marathon-tracks.json` and `data/activity-details/{id}.json` (both gitignored).
 
 ## Adding a marathon
 
@@ -89,9 +111,9 @@ Push to `main` — the GitHub Actions workflow in `.github/workflows/pages.yml` 
 ## Scripts
 
 ```bash
-node scripts/import-garmin.mjs  # Import Garmin DI_CONNECT export → data/activities.json
-node scripts/import-marathon-gpx.mjs  # GPX in data/gpx/marathons/ → data/marathon-tracks.json
-node scripts/extract-data.mjs   # Regenerate JSON from monolith backup (legacy)
-node scripts/build-index.mjs    # Rebuild index.html from monolith backup
-node scripts/test-load.mjs      # Verify JS bundles load locally
+node scripts/import-garmin.mjs       # Import Garmin DI_CONNECT export → data/activities.json
+node scripts/import-marathon-fit.mjs # FIT/ZIP in data/ or data/fits/marathons/ → tracks + charts
+node scripts/extract-data.mjs        # Regenerate JSON from monolith backup (legacy)
+node scripts/build-index.mjs         # Rebuild index.html from monolith backup
+node scripts/test-load.mjs           # Verify JS bundles load locally
 ```

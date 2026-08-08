@@ -1319,10 +1319,184 @@
       white-space: nowrap; transition: border-color 0.15s, color 0.15s;
     }
     .export-btn:hover { border-color: #f97316; color: #f97316; }
+    a.export-btn { text-decoration: none; display: inline-flex; align-items: center; }
+    .race-activity-btn { padding: 4px 10px; font-size: 0.75rem; }
     .table-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
 
     /* ── FOOTER ──────────────────────────────────────── */
     footer {
       text-align: center; color: var(--muted); font-size: 0.8rem;
       margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border);
+    }
+
+    /* ── GARMIN-STYLE ACTIVITY PAGE ──────────────────── */
+    .activity-page-body { margin: 0; }
+    .gc-topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px; border-bottom: 1px solid var(--border);
+      background: var(--card); position: sticky; top: 0; z-index: 20;
+    }
+    .gc-back {
+      color: var(--text); text-decoration: none; font-weight: 600; font-size: 0.92rem;
+    }
+    .gc-back:hover { color: #f97316; }
+    .gc-topbar .theme-toggle { position: static; }
+    .gc-status {
+      text-align: center; padding: 48px 20px; color: var(--muted); font-size: 1rem;
+    }
+    .gc-status--error { color: #ef4444; }
+    .gc-page { max-width: 1100px; margin: 0 auto 48px; }
+    .gc-map-wrap { position: relative; }
+    .gc-map {
+      height: min(52vh, 520px); width: 100%;
+      border-bottom: 1px solid var(--border);
+      background: var(--card2);
+    }
+    .gc-map-scrub {
+      position: absolute; left: 12px; bottom: 12px; z-index: 500;
+      background: rgba(0,0,0,0.7); color: #fff; border-radius: 8px;
+      padding: 6px 10px; font-size: 0.78rem; font-variant-numeric: tabular-nums;
+    }
+    [data-theme="light"] .gc-map-scrub { background: rgba(255,255,255,0.92); color: #111; }
+    .gc-panel { padding: 22px 20px 40px; }
+    .gc-head { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 18px; }
+    .gc-flag { flex-shrink: 0; padding-top: 4px; }
+    .gc-title { font-size: 1.75rem; font-weight: 800; margin: 0 0 4px; letter-spacing: -0.02em; }
+    .gc-sub { margin: 0; color: var(--muted); font-size: 0.92rem; }
+    .gc-hero-stats {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+      margin-bottom: 16px;
+    }
+    .gc-hero-stat {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      padding: 16px 12px; text-align: center;
+    }
+    .gc-hero-val {
+      font-size: 1.55rem; font-weight: 800; font-variant-numeric: tabular-nums;
+      color: #f97316; line-height: 1.1;
+    }
+    .gc-hero-label {
+      margin-top: 6px; font-size: 0.68rem; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .gc-split-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+      padding: 16px 18px; margin-bottom: 16px;
+    }
+    .gc-split-main {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      flex-wrap: wrap; margin-bottom: 14px;
+    }
+    .gc-split-badge {
+      display: inline-block; font-size: 0.95rem; font-weight: 800;
+      border-radius: 999px; padding: 8px 14px;
+      border: 1px solid var(--border);
+    }
+    .gc-split-badge--negative {
+      color: #22c55e;
+      background: rgba(34,197,94,0.12);
+      border-color: rgba(34,197,94,0.4);
+    }
+    .gc-split-badge--even {
+      color: #38bdf8;
+      background: rgba(56,189,248,0.12);
+      border-color: rgba(56,189,248,0.4);
+    }
+    .gc-split-badge--positive {
+      color: #f97316;
+      background: rgba(249,115,22,0.12);
+      border-color: rgba(249,115,22,0.4);
+    }
+    .gc-split-score-wrap { text-align: right; }
+    .gc-split-score {
+      font-size: 2rem; font-weight: 900; line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .gc-split-score-label {
+      font-size: 0.68rem; color: var(--muted); text-transform: uppercase;
+      letter-spacing: 0.06em; margin-top: 4px;
+    }
+    .gc-split-halves {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    }
+    .gc-split-half {
+      background: var(--card2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 14px;
+    }
+    .gc-split-note { margin: 12px 0 0; font-size: 0.82rem; }
+    @media (max-width: 700px) {
+      .gc-split-halves { grid-template-columns: 1fr; }
+    }
+    .gc-sec-stats {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px; margin-bottom: 22px;
+    }
+    .gc-sec-stat {
+      background: var(--card2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 12px 14px;
+    }
+    .gc-sec-label {
+      font-size: 0.68rem; color: var(--muted); text-transform: uppercase;
+      letter-spacing: 0.05em; margin-bottom: 4px;
+    }
+    .gc-sec-val { font-size: 1.05rem; font-weight: 700; }
+    .gc-charts-block { margin-top: 8px; }
+    .gc-charts-head {
+      display: flex; justify-content: space-between; align-items: baseline;
+      gap: 12px; margin-bottom: 8px; flex-wrap: wrap;
+    }
+    .gc-charts-label {
+      font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+    }
+    .gc-charts-cursor, .gc-charts-note { font-size: 0.78rem; color: var(--muted); margin: 0 0 10px; }
+    .gc-charts-stack { display: flex; flex-direction: column; gap: 12px; }
+    .gc-chart-panel {
+      background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+      padding: 12px 14px 8px;
+    }
+    .gc-chart-head {
+      display: flex; justify-content: space-between; align-items: baseline;
+      gap: 10px; margin-bottom: 6px;
+    }
+    .gc-chart-title { font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+    .gc-chart-avg { font-size: 0.75rem; color: var(--muted); }
+    .gc-chart-canvas-wrap { height: 160px; }
+    .gc-splits-block { margin-top: 22px; }
+    .gc-splits-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .gc-splits-table th, .gc-splits-table td {
+      padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left;
+      font-variant-numeric: tabular-nums;
+    }
+    .gc-splits-table th { color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .gc-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+    .gc-actions .export-btn { text-decoration: none; display: inline-flex; align-items: center; }
+    @media (max-width: 700px) {
+      .gc-hero-stats { grid-template-columns: repeat(2, 1fr); }
+      .gc-title { font-size: 1.35rem; }
+      .gc-map { height: 42vh; }
+    }
+
+    /* ── RACE WEATHER / DIFFICULTY ───────────────────── */
+    .weather-cell, .window-cell {
+      font-size: 0.78rem; color: var(--muted); white-space: nowrap;
+    }
+    .difficulty-badge {
+      display: inline-block; font-size: 0.75rem; font-weight: 700;
+      color: var(--diff-color, var(--text));
+      background: color-mix(in srgb, var(--diff-color, #8b949e) 16%, transparent);
+      border: 1px solid color-mix(in srgb, var(--diff-color, #8b949e) 40%, transparent);
+      border-radius: 999px; padding: 3px 9px; white-space: nowrap;
+    }
+    .modal-section-title {
+      font-size: 0.8rem; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      margin: 18px 0 10px;
+    }
+    .difficulty-factors {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;
+    }
+    .difficulty-factor {
+      font-size: 0.72rem; color: var(--muted);
+      background: var(--card2); border: 1px solid var(--border);
+      border-radius: 999px; padding: 3px 8px;
     }

@@ -11,6 +11,8 @@ window.App = {
   activities: [],
   activityMeta: null,
   activitySummary: null,
+  raceWeather: [],
+  raceOverrides: [],
   stats: {},
 };
 
@@ -79,13 +81,14 @@ function computeStats() {
 }
 
 window.loadAppData = async function loadAppData() {
-  const [marathons, countries, halfRaces, trails, log, goals] = await Promise.all([
+  const [marathons, countries, halfRaces, trails, log, goals, raceWeather] = await Promise.all([
     loadJSON('data/marathons.json'),
     loadJSON('data/countries.json'),
     loadJSON('data/half-marathons.json'),
     loadJSON('data/trails.json'),
     loadJSON('data/training.json'),
     loadJSON('data/goals.json'),
+    loadJSON('data/race-weather.json').catch(() => []),
   ]);
 
   App.races = marathons;
@@ -93,12 +96,22 @@ window.loadAppData = async function loadAppData() {
   App.trails = enrichTrails(trails);
   App.log = enrichTraining(log);
   App.goals = goals;
+  App.raceWeather = Array.isArray(raceWeather) ? raceWeather : [];
   App.countryData = countries
     .map(c => ({ ...c, count: marathons.filter(r => r.country === c.code).length }))
     .filter(c => c.count > 0)
     .sort((a, b) => b.count - a.count);
 
   computeStats();
+
+  if (typeof RaceWeather !== 'undefined') {
+    let dateMap = null;
+    if (typeof ActivityUtils !== 'undefined' && App.activities?.length) {
+      dateMap = RaceWeather.resolveRaceDates(App.activities, App.races, App.raceOverrides || []);
+    }
+    RaceWeather.enrichRaces(App.races, App.raceWeather, dateMap);
+  }
+
   return App;
 };
 
