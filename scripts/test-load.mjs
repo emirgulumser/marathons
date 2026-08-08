@@ -49,7 +49,11 @@ global.L = {
 global.fetch = async (url) => {
   const rel = url.includes('data/') ? url.slice(url.indexOf('data/')) : url;
   const file = rel.replace(/\?.*$/, '');
-  return { ok: true, json: async () => JSON.parse(fs.readFileSync(path.join(root, file), 'utf8')) };
+  const full = path.join(root, file);
+  if (!fs.existsSync(full)) {
+    return { ok: false, status: 404, json: async () => { throw new Error(`Missing ${file}`); } };
+  }
+  return { ok: true, json: async () => JSON.parse(fs.readFileSync(full, 'utf8')) };
 };
 
 const files = [

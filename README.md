@@ -30,8 +30,8 @@ Then visit `http://localhost:8080`.
 │   ├── training.json
 │   ├── countries.json
 │   ├── goals.json
-│   └── activities.json     # Generated from Garmin export
-│   └── marathon-tracks.json # Simplified routes from marathon GPX files
+│   ├── activities.json      # Generated locally from Garmin (gitignored)
+│   └── marathon-tracks.json # Generated locally from GPX (gitignored)
 └── js/
     ├── app.js              # Bootstrap
     ├── store.js            # Load data, compute stats
@@ -56,7 +56,7 @@ Then visit `http://localhost:8080`.
 node scripts/import-garmin.mjs
 ```
 
-This regenerates `data/activities.json` with activities, PRs, daily heatmap data, race matching, and Garmin-vs-training comparison. Commit `data/activities.json` — do **not** commit `DI_CONNECT/` (it is gitignored).
+This regenerates `data/activities.json` with activities, PRs, daily heatmap data, race matching, and Garmin-vs-training comparison. Keep `data/activities.json` and `data/marathon-tracks.json` local only — they are gitignored. Do **not** commit `DI_CONNECT/` either.
 
 Optional: add device display names in `DEVICE_NAMES` inside `scripts/import-garmin.mjs`.
 

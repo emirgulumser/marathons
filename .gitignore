@@ -1,4 +1,25 @@
 # Garmin raw export (large, personal) — regenerate data/activities.json instead
 DI_CONNECT/
+garmin_data/
+*.zip
+
+# Generated personal user data — do not commit
+data/activities.json
+data/marathon-tracks.json
+data/race-weather.json
+data/race-weather-overrides.json
+data/race-activity-overrides.json
+data/race-start-times.json
+
 # Raw marathon GPX (large) — run scripts/import-marathon-gpx.mjs → data/marathon-tracks.json
 data/gpx/
+
+# OS / editor
+.DS_Store
+**/.DS_Store
+.idea/
+.vscode/
+.merge-backup/
+
+# Legacy monolith backup
+index.monolith.bak
