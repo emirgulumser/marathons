@@ -129,19 +129,14 @@ window.renderModalRouteMap = function renderModalRouteMap(track, opts = {}) {
 };
 
 window.mountMarathonRoute = function mountMarathonRoute(track, opts = {}) {
-  if (!track?.points?.length) return '';
+  if (!track?.points?.length) return;
   const section = document.getElementById('marathonRouteSection');
   const meta = document.getElementById('marathonRouteMeta');
   if (section) section.hidden = false;
-  const gpxUrl = marathonSourceUrl(track);
   if (meta) {
-    const link = gpxUrl
-      ? ` · <a href="${gpxUrl}" download="${track.sourceFile}">Download ${track.sourceFormat === 'fit' || /\.zip$/i.test(track.sourceFile) ? 'FIT' : 'GPX'}</a>`
-      : '';
-    meta.innerHTML = `${track.distKm} km logged · ${track.simplifiedCount.toLocaleString()} points on map${link}`;
+    meta.textContent = `${track.distKm} km logged · ${track.simplifiedCount.toLocaleString()} points on map`;
   }
   requestAnimationFrame(() => renderModalRouteMap(track, opts));
-  return gpxUrl;
 };
 
 window.openMarathonRouteModal = async function openMarathonRouteModal(raceName, raceYear) {

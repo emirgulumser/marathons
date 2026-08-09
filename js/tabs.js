@@ -8,10 +8,15 @@ const TAB_INIT = {
 };
 
 window.switchTab = function switchTab(name, opts = {}) {
+  const prevTab = document.querySelector('.tab-content.active')?.id?.replace('tab-', '');
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelector(`.tab-btn[data-tab="${name}"]`)?.classList.add('active');
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   document.getElementById(`tab-${name}`)?.classList.add('active');
+
+  if (prevTab === 'activities' && name !== 'activities') {
+    window.pauseActMapHeat?.();
+  }
 
   if (name === 'activities' && opts.marathonKey) {
     window._pendingMarathonBlockKey = opts.marathonKey;
@@ -30,6 +35,7 @@ window.switchTab = function switchTab(name, opts = {}) {
     window.leafletMap?.invalidateSize();
     window.halfMapRef?.invalidateSize();
     window.actMapRef?.invalidateSize();
+    if (name === 'activities') window.refreshActMapHeat?.();
   }, 50);
 };
 

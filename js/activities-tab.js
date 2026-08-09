@@ -185,6 +185,35 @@ window.initActivitiesTab = async function () {
     return date;
   }
 
+  function predictErrClass(err) {
+    const abs = Math.abs(err);
+    if (abs <= 5) return 'predict-err-good';
+    if (abs <= 15) return 'predict-err-mid';
+    return 'predict-err-bad';
+  }
+
+  function renderPredictContext(date) {
+    const el = document.getElementById('actPredictContext');
+    if (!el || !RP || !racePredictions) return;
+    const blocks = summary.marathonBlocks || [];
+    const race = RP.findCompareRace(date, blocks, window.actPredictCompareKey, 21);
+    if (race && window.actPredictCompareKey) {
+      const bt = (racePredictions.backtest || []).find(b => b.key === window.actPredictCompareKey);
+      if (bt && bt.predictDate === date) {
+        el.textContent = `Viewing T−7 snapshot for ${race.raceName} ${race.raceYear} (${date})`;
+        el.hidden = false;
+        return;
+      }
+    }
+    if (race && RP.findRaceAtPredictDate(date, blocks)) {
+      el.textContent = `Predict date is 7 days before ${race.raceName} ${race.raceYear}`;
+      el.hidden = false;
+      return;
+    }
+    el.hidden = true;
+    el.textContent = '';
+  }
+
   function setPredictDate(date, opts = {}) {
     const safe = sanitizePredictDate(date, racePredictions);
     if (!safe) return;
@@ -247,7 +276,7 @@ window.initActivitiesTab = async function () {
       <div class="predict-compare-grid">
         <div><span class="predict-compare-label">Predicted</span><strong>${fmtTime(pred.marathon.minutes)}</strong></div>
         <div><span class="predict-compare-label">Actual</span><strong>${fmtTime(race.raceMinutes)}</strong></div>
-        <div><span class="predict-compare-label">Error</span><strong title="Negative = faster than predicted">${err > 0 ? '+' : ''}${err} min</strong></div>
+        <div><span class="predict-compare-label">Error</span><strong class="${predictErrClass(err)}" title="Negative = faster than predicted">${err > 0 ? '+' : ''}${err} min</strong></div>
       </div>
       ${act ? `<button type="button" class="filter-btn" id="actPredictRaceActBtn" style="margin-top:12px">View race activity</button>` : ''}`;
     document.getElementById('actPredictRaceActBtn')?.addEventListener('click', () => openActModal(act));
@@ -520,13 +549,15 @@ window.initActivitiesTab = async function () {
 
     tbody.innerHTML = slice.map(row => {
       const err = row.errorMin;
+      const abs = err == null ? null : Math.abs(err);
+      const errCls = abs == null ? '' : predictErrClass(err);
       const errTxt = err == null ? '—' : `${err > 0 ? '+' : ''}${err} min`;
       return `<tr class="predict-backtest-row" data-predict-date="${row.predictDate}" data-race-key="${row.key}" style="cursor:pointer">
         <td>${row.raceName} ${row.raceYear}</td>
         <td>${row.predictDate}</td>
         <td class="time-cell">${row.predictedMinutes != null ? fmtTime(row.predictedMinutes) : '—'}</td>
         <td class="time-cell">${fmtTime(row.actualMinutes)}</td>
-        <td class="time-cell">${errTxt}</td>
+        <td class="time-cell ${errCls}">${errTxt}</td>
       </tr>`;
     }).join('');
     tbody.querySelectorAll('.predict-backtest-row').forEach(tr => {
@@ -704,6 +735,7 @@ window.initActivitiesTab = async function () {
     renderPredictMethods(pred);
     renderPredictTimeline(safe);
     renderPredictBacktest();
+    renderPredictContext(safe);
   }
 
   function renderStats(list) {
@@ -1539,6 +1571,11 @@ window.initActivitiesTab = async function () {
     return [...grid.values()].map(c => [c.lat, c.lng, c.runs / maxRuns]);
   }
 
+  function actMapHasSize() {
+    const el = document.getElementById('actMap');
+    return !!(el && el.offsetWidth > 0 && el.offsetHeight > 0);
+  }
+
   function initMapBase() {
     if (window.actMapRef) return;
     const actMap = L.map('actMap', { zoomControl: true, scrollWheelZoom: false }).setView([39.9, 32.8], 6);
@@ -1551,9 +1588,16 @@ window.initActivitiesTab = async function () {
     ).addTo(actMap);
   }
 
-  function renderMapHeatmap() {
+  function renderMapHeatmap(retry = 0) {
     initMapBase();
     const map = window.actMapRef;
+    map.invalidateSize();
+
+    if (!actMapHasSize()) {
+      if (retry < 30) requestAnimationFrame(() => renderMapHeatmap(retry + 1));
+      return;
+    }
+
     if (window.actHeatLayer) {
       map.removeLayer(window.actHeatLayer);
       window.actHeatLayer = null;
@@ -1611,6 +1655,19 @@ window.initActivitiesTab = async function () {
     renderMapFilters();
     renderMapHeatmap();
   }
+
+  window.pauseActMapHeat = function pauseActMapHeat() {
+    const map = window.actMapRef;
+    if (map && window.actHeatLayer) {
+      map.removeLayer(window.actHeatLayer);
+      window.actHeatLayer = null;
+    }
+  };
+
+  window.refreshActMapHeat = function refreshActMapHeat() {
+    if (!window._activitiesTabInit) return;
+    renderMapHeatmap();
+  };
 
   function renderTable(list) {
     const pageSize = parseInt(document.getElementById('actPageSize')?.value || '100', 10);
@@ -1762,7 +1819,6 @@ window.initActivitiesTab = async function () {
         ${raceActions}
         <a class="export-btn" id="actModalActivityPage" hidden>Open activity page</a>
         <a class="export-btn" href="${a.garminUrl}" target="_blank" rel="noopener">View on Garmin</a>
-        <a class="export-btn" id="actModalGpxLink" hidden download>Download FIT</a>
       </div>`;
     document.querySelectorAll('.similar-run-item').forEach(el => {
       el.onclick = () => openActModal(findActivity(Number(el.dataset.id)));
@@ -1773,7 +1829,7 @@ window.initActivitiesTab = async function () {
     loadMarathonTracks().then(() => {
       const track = trackForActivity(a);
       if (!track) return;
-      const gpxUrl = mountMarathonRoute(track, { activity: a });
+      mountMarathonRoute(track, { activity: a });
       const pageLink = document.getElementById('actModalActivityPage');
       if (pageLink && typeof activityPageUrl === 'function') {
         pageLink.href = activityPageUrl({
@@ -1782,12 +1838,6 @@ window.initActivitiesTab = async function () {
           raceYear: track.raceYear,
         });
         pageLink.hidden = false;
-      }
-      const gpxLink = document.getElementById('actModalGpxLink');
-      if (gpxLink && gpxUrl) {
-        gpxLink.href = gpxUrl;
-        gpxLink.download = track.sourceFile;
-        gpxLink.hidden = false;
       }
       const routeBtn = document.getElementById('actModalRouteBtn');
       if (routeBtn) {

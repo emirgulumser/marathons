@@ -10,7 +10,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-  <link rel="stylesheet" href="css/styles.css?v=20260808-tlhover">
+  <link rel="stylesheet" href="css/styles.css?v=20260809-passport">
 </head>
 <body>
 <!-- HEADER -->
@@ -81,19 +81,19 @@
     </div>
   </div>
 
-  <!-- PB PROGRESSION + DISTRIBUTION -->
-  <div class="section two-col">
-    <div>
-      <div class="section-title">Personal Best Progression</div>
-      <div class="chart-card">
-        <div style="position:relative;height:280px"><canvas id="pbChart"></canvas></div>
+  <!-- FINISH TIME DISTRIBUTION -->
+  <div class="section">
+    <div class="section-title">Finish Time Distribution <span style="font-weight:400;color:var(--muted);font-size:0.8rem">— 5 min bins · click to filter table</span></div>
+    <div class="chart-card">
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div> &lt; 2:55</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div> Sub 3:00</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div> 3:00–3:30</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f97316"></div> 3:45+</div>
+        <div class="legend-item"><div class="legend-line" style="background:#fbbf24;border-top:2px dashed #fbbf24"></div> Median</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#a78bfa"></div> Each race (dots)</div>
       </div>
-    </div>
-    <div>
-      <div class="section-title">Finish Time Distribution</div>
-      <div class="chart-card">
-        <div style="position:relative;height:280px"><canvas id="distChart"></canvas></div>
-      </div>
+      <div style="position:relative;height:380px"><canvas id="distChart"></canvas></div>
     </div>
   </div>
 
@@ -228,27 +228,17 @@
   </div>
 
   <!-- ALL RACES TABLE -->
-  <div class="section">
-    <div class="section-title">All Races</div>
+  <div class="section" id="sectionAllRaces">
+    <div class="section-title" id="allRacesTitle">All Races</div>
     <div class="chart-card">
       <div class="table-controls">
         <button class="export-btn" onclick="exportMarathonsCSV()" title="Export CSV">⬇ CSV</button>
         <input class="search-input" id="searchInput" type="text" placeholder="Search race or country…">
+        <div class="race-filter-chips" id="raceFilterChips" hidden></div>
         <div class="filter-bar" id="filterBar">
           <button class="filter-btn active" data-filter="all">All</button>
           <button class="filter-btn" data-filter="major">⭐ Majors</button>
           <button class="filter-btn" data-filter="sub3">Sub 3:00</button>
-          <button class="filter-btn" data-filter="2016">2016</button>
-          <button class="filter-btn" data-filter="2017">2017</button>
-          <button class="filter-btn" data-filter="2018">2018</button>
-          <button class="filter-btn" data-filter="2019">2019</button>
-          <button class="filter-btn" data-filter="2020">2020</button>
-          <button class="filter-btn" data-filter="2021">2021</button>
-          <button class="filter-btn" data-filter="2022">2022</button>
-          <button class="filter-btn" data-filter="2023">2023</button>
-          <button class="filter-btn" data-filter="2024">2024</button>
-          <button class="filter-btn" data-filter="2025">2025</button>
-          <button class="filter-btn" data-filter="2026">2026</button>
         </div>
       </div>
       <div class="table-wrap">
@@ -519,6 +509,12 @@
       </div>
       <div class="chart-card volume-chart-card">
         <div class="section-title" style="font-size:0.95rem;margin-bottom:8px">Prediction timeline</div>
+        <div class="chart-legend" style="margin-bottom:8px">
+          <div class="legend-item"><div class="legend-line" style="background:#3b82f6;border-top:2px solid #3b82f6"></div> Predicted marathon</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div> Actual race</div>
+          <div class="legend-item"><div class="legend-line" style="background:#f97316;border-top:2px dashed #f97316"></div> Selected predict date</div>
+        </div>
+        <p class="muted-text" id="actPredictContext" style="margin:0 0 8px" hidden></p>
         <div class="volume-plot volume-plot--wide"><canvas id="actPredictTimelineChart"></canvas></div>
       </div>
       <div class="chart-card">
@@ -772,26 +768,27 @@
     Loading…
   </footer>
 </div>
-<script src="js/config.js?v=20260808-tlhover"></script>
-<script src="js/utils.js?v=20260808-tlhover"></script>
-<script src="js/activity-utils.js?v=20260808-tlhover"></script>
-<script src="js/race-weather.js?v=20260808-tlhover"></script>
-<script src="js/store.js?v=20260808-tlhover"></script>
+<script src="js/config.js?v=20260809-plan"></script>
+<script src="js/utils.js?v=20260809-plan"></script>
+<script src="js/activity-utils.js?v=20260809-plan"></script>
+<script src="js/race-weather.js?v=20260809-plan"></script>
+<script src="js/store.js?v=20260809-plan"></script>
 <script src="js/theme.js?v=20250701"></script>
-<script src="js/marathon-track.js?v=20260808-tlhover"></script>
-<script src="js/gpx-charts.js?v=20260808-tlhover"></script>
-<script src="js/modal.js?v=20260808-tlhover"></script>
-<script src="js/tabs.js?v=20250701"></script>
+<script src="js/marathon-track.js?v=20260809-plan"></script>
+<script src="js/gpx-charts.js?v=20260809-plan"></script>
+<script src="js/modal.js?v=20260809-plan"></script>
+<script src="js/tabs.js?v=20260809-mapheat"></script>
 <script src="js/export.js?v=20250701"></script>
 <script src="js/goals.js?v=20250701"></script>
-<script src="js/marathons-tab.js?v=20260808-tlhover"></script>
+<script src="js/marathon-charts.js?v=20260809-tooltip"></script>
+<script src="js/marathons-tab.js?v=20260809-passport"></script>
 <script src="js/half-tab.js?v=20250701"></script>
 <script src="js/training-tab.js?v=20250701"></script>
 <script src="js/trail-tab.js?v=20250701"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script type="module" src="js/race-prediction-bridge.js?v=20250705"></script>
 <script src="js/activities-utils.js?v=20250704"></script>
-<script src="js/activities-tab.js?v=20260808-tlhover"></script>
+<script src="js/activities-tab.js?v=20260809-mapheat"></script>
 <script src="js/app.js?v=20250704"></script>
 </body>
 </html>

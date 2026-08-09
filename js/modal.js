@@ -77,17 +77,12 @@ window.openModal = function openModal(race) {
   loadMarathonTracks().then(tracks => {
     const track = tracks[marathonRaceKey(race)];
     if (!track) return;
-    const gpxUrl = mountMarathonRoute(track, { race });
+    mountMarathonRoute(track, { race });
     const actions = document.getElementById('marathonModalActions');
     if (actions && !actions.querySelector('[data-activity-page]')) {
       const href = activityPageUrl({ activityId: track.activityId, raceName: race.name, raceYear: race.year });
       actions.insertAdjacentHTML('afterbegin',
         `<a class="export-btn" data-activity-page href="${href}">Open activity page</a>`);
-    }
-    if (gpxUrl && actions && !actions.querySelector('[data-gpx-link]')) {
-      const label = track.sourceFormat === 'fit' || /\.(zip|fit)$/i.test(track.sourceFile || '') ? 'Download FIT' : 'Download GPX';
-      actions.insertAdjacentHTML('afterbegin',
-        `<a class="export-btn" data-gpx-link href="${gpxUrl}" download="${track.sourceFile}">${label}</a>`);
     }
     if (typeof mountGpxCharts === 'function') mountGpxCharts(track);
   });

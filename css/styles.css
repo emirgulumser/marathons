@@ -152,6 +152,11 @@
       transition: transform 0.15s, border-color 0.15s;
     }
     .passport-item:hover { transform: translateY(-3px); border-color: #f97316; }
+    .passport-item--active {
+      border-color: #f97316;
+      background: rgba(249, 115, 22, 0.12);
+      box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.35);
+    }
     .passport-flag {
       display: flex; align-items: center; justify-content: center;
       min-height: 30px;
@@ -757,10 +762,28 @@
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
     }
     .predict-compare-label { display: block; font-size: 0.72rem; color: var(--muted); margin-bottom: 4px; }
-    .predict-err-good,
-    .predict-err-mid,
-    .predict-err-bad { color: inherit; font-weight: 700; }
-    #actPredictBacktestTable td.time-cell { color: var(--text); font-weight: 700; }
+    .predict-err-good { color: #22c55e; font-weight: 700; }
+    .predict-err-mid { color: #eab308; font-weight: 700; }
+    .predict-err-bad { color: #f97316; font-weight: 700; }
+    #actPredictBacktestTable td.time-cell.predict-err-good,
+    #actPredictBacktestTable td.time-cell.predict-err-mid,
+    #actPredictBacktestTable td.time-cell.predict-err-bad { font-weight: 700; }
+    .race-filter-chips {
+      display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+      width: 100%; margin-top: 4px;
+    }
+    .filter-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 999px;
+      border: 1px solid rgba(249,115,22,0.45);
+      background: rgba(249,115,22,0.12);
+      color: #f97316; font-size: 0.78rem; font-weight: 600;
+      cursor: pointer;
+    }
+    .filter-chip--clear {
+      border-color: var(--border); background: var(--card2); color: var(--muted);
+    }
+    .filter-chip:hover { border-color: #f97316; }
     .predict-backtest-pager {
       display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
       margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);

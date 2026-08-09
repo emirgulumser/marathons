@@ -85,7 +85,15 @@ const yTimeScale = (min=160, max=275) => ({
     },
     options:{
       ...chartOpts(),
-      onClick(e,els){ if(els.length){ openModal(App.races[els[0].index]); } },
+      onClick(e, els) {
+        if (!els.length || els[0].datasetIndex !== 0) return;
+        const race = App.races[els[0].index];
+        openModal(race);
+        if (window._distChartState && window.MarathonCharts) {
+          const b = MarathonCharts.binForMinutes(window._distChartState.buckets, race.minutes);
+          if (b) applyTimeBinFilter({ min: b.min, max: b.max, label: b.label }, { toggle: false });
+        }
+      },
       plugins:{
         legend:{display:false},
         tooltip:{ backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
@@ -118,95 +126,118 @@ const yTimeScale = (min=160, max=275) => ({
 })();
 
 
-(function() {
-  const ctx = document.getElementById('pbChart').getContext('2d');
-  let curPB = Infinity;
-  const pbPoints = [];
-  App.races.forEach((r,i) => {
-    if(r.minutes < curPB){ curPB=r.minutes; pbPoints.push({x:i+1, y:curPB, race:r}); }
-  });
-
-  // Build stepped data: for each race index, what was the PB at that point?
-  let best = Infinity;
-  const pbLine = App.races.map((r,i) => {
-    if(r.minutes < best) best = r.minutes;
-    return best;
-  });
-
-  new Chart(ctx, {
-    type:'line',
-    data:{
-      labels: App.races.map(r=>`${r.name} ${r.year}`),
-      datasets:[
-        { label:'PB level', data:pbLine, stepped:'after',
-          borderColor:'#fbbf24', borderWidth:2.5,
-          backgroundColor:'rgba(251,191,36,0.08)',
-          pointRadius:0, fill:true, tension:0 },
-        { label:'PB set', data:pbPoints.map(p=>({ x:p.x-1, y:p.y })),
-          borderColor:'transparent', backgroundColor:'#fbbf24',
-          pointRadius:8, pointStyle:'star', showLine:false }
-      ]
-    },
-    options:{
-      ...chartOpts(),
-      plugins:{ legend:{display:false},
-        tooltip:{ backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
-          filter: i=>i.datasetIndex===1,
-          callbacks:{ title:()=>'Personal Best', label: i=>{
-            const r=pbPoints[i.dataIndex]?.race;
-            return r?` ${r.name} ${r.year} — ${r.time}`:'';
-          }}
-        }
-      },
-      scales:{
-        x:{ ticks:{display:false}, grid:{color:'rgba(255,255,255,0.03)'} },
-        y: yTimeScale(160,230)
-      }
-    }
-  });
-})();
-
-
-(function() {
-  const ctx = document.getElementById('distChart').getContext('2d');
-  const buckets = [
-    { label:'< 2:55', min:0,   max:175, color:'#fbbf24' },
-    { label:'2:55–3:00', min:175, max:180, color:'#22c55e' },
-    { label:'3:00–3:10', min:180, max:190, color:'#86efac' },
-    { label:'3:10–3:20', min:190, max:200, color:'#3b82f6' },
-    { label:'3:20–3:30', min:200, max:210, color:'#60a5fa' },
-    { label:'3:30–3:45', min:210, max:225, color:'#a78bfa' },
-    { label:'3:45–4:00', min:225, max:240, color:'#f97316' },
-    { label:'4:00+',     min:240, max:999, color:'#ef4444' },
-  ];
-  const counts = buckets.map(b => App.races.filter(r=>r.minutes>=b.min && r.minutes<b.max).length);
-
-  new Chart(ctx, {
-    type:'bar',
-    data:{
-      labels: buckets.map(b=>b.label),
-      datasets:[{ data:counts,
-        backgroundColor: buckets.map(b=>b.color+'bb'),
-        borderColor: buckets.map(b=>b.color),
-        borderWidth:1.5, borderRadius:8 }]
-    },
-    options:{
-      ...chartOpts(),
-      plugins:{ legend:{display:false},
-        tooltip:{ backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
-          callbacks:{ label: i=>`${i.raw} race${i.raw!==1?'s':''}` }
-        }
-      },
-      scales:{
-        x:{ grid:{display:false}, ticks:{color:'#8b949e', font:{size:10}} },
-        y:{ grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8b949e', stepSize:1} }
-      }
-    }
-  });
-})();
-
-
 window.activeCountryFilter = null;
+window.activeTimeBinFilter = null;
+window._distChartState = null;
+window._countryChart = null;
+
+function applyTimeBinFilter(bin, { toggle = true } = {}) {
+  if (!bin) {
+    window.activeTimeBinFilter = null;
+  } else if (toggle && window.activeTimeBinFilter
+    && window.activeTimeBinFilter.min === bin.min
+    && window.activeTimeBinFilter.max === bin.max) {
+    window.activeTimeBinFilter = null;
+  } else {
+    window.activeTimeBinFilter = bin;
+  }
+  if (window._distChartState) {
+    MarathonCharts.refreshDistHighlight(window._distChartState, window.activeTimeBinFilter);
+  }
+  renderFilterChips();
+  renderTable();
+}
+
+function refreshCountryChartHighlight() {
+  if (!window._countryChart || !window._countryChartPalette) return;
+  const bg = window._countryChartPalette.map((col, i) => {
+    const code = App.countryData[i].code;
+    return (!window.activeCountryFilter || code === window.activeCountryFilter) ? col + 'cc' : col + '33';
+  });
+  window._countryChart.data.datasets[0].backgroundColor = bg;
+  window._countryChart.update();
+}
+
+function refreshPassportHighlight() {
+  document.querySelectorAll('#passportGrid .passport-item').forEach(el => {
+    el.classList.toggle('passport-item--active', el.dataset.country === window.activeCountryFilter);
+  });
+}
+
+function applyCountryFilter(code, { toggle = true, scroll = false } = {}) {
+  if (!code) {
+    window.activeCountryFilter = null;
+  } else if (toggle && window.activeCountryFilter === code) {
+    window.activeCountryFilter = null;
+  } else {
+    window.activeCountryFilter = code;
+  }
+  refreshCountryChartHighlight();
+  refreshPassportHighlight();
+  renderFilterChips();
+  renderTable();
+  if (scroll && window.activeCountryFilter) {
+    document.getElementById('sectionAllRaces')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+function clearChartFilters() {
+  window.activeCountryFilter = null;
+  window.activeTimeBinFilter = null;
+  if (window._distChartState) {
+    MarathonCharts.refreshDistHighlight(window._distChartState, null);
+  }
+  refreshCountryChartHighlight();
+  refreshPassportHighlight();
+  renderFilterChips();
+  renderTable();
+}
+
+function renderFilterChips() {
+  const el = document.getElementById('raceFilterChips');
+  if (!el) return;
+  const chips = [];
+  if (window.activeTimeBinFilter) {
+    const t = window.activeTimeBinFilter;
+    chips.push({ kind: 'time', label: `Time: ${t.label || MarathonCharts.binRangeLabel(t.min, t.max)}` });
+  }
+  if (window.activeCountryFilter) {
+    const c = App.countryMap[window.activeCountryFilter];
+    chips.push({ kind: 'country', label: `Country: ${c?.name || window.activeCountryFilter}` });
+  }
+  if (!chips.length) {
+    el.hidden = true;
+    el.innerHTML = '';
+    return;
+  }
+  el.hidden = false;
+  el.innerHTML = chips.map(c =>
+    `<button type="button" class="filter-chip" data-chip="${c.kind}">${c.label} <span aria-hidden="true">✕</span></button>`
+  ).join('') + '<button type="button" class="filter-chip filter-chip--clear">Clear all</button>';
+  el.querySelectorAll('.filter-chip').forEach(btn => {
+    btn.onclick = () => {
+      if (btn.classList.contains('filter-chip--clear')) {
+        clearChartFilters();
+        return;
+      }
+      if (btn.dataset.chip === 'time') applyTimeBinFilter(null);
+      if (btn.dataset.chip === 'country') applyCountryFilter(null);
+    };
+  });
+}
+
+(function initDistChart() {
+  const canvas = document.getElementById('distChart');
+  if (!canvas || !window.MarathonCharts) return;
+  window._distChartState = MarathonCharts.initDistChart({
+    canvas,
+    races: App.races,
+    chartOpts,
+    onFilterChange: bin => applyTimeBinFilter(bin),
+    onRaceClick: race => openModal(race),
+  });
+})();
+
 (function() {
   const ctx = document.getElementById('countryChart').getContext('2d');
   const palette = ['#f97316','#fbbf24','#22c55e','#3b82f6','#a78bfa','#ec4899',
@@ -226,19 +257,8 @@ window.activeCountryFilter = null;
       layout: { padding: { left: 6 } },
       ...chartOpts(),
       onClick(e, els){
-        if(!els.length){ window.activeCountryFilter=null; }
-        else {
-          const code = App.countryData[els[0].index].code;
-          window.activeCountryFilter = window.activeCountryFilter===code ? null : code;
-        }
-        renderTable();
-        // highlight active
-        const bg = palette.map((c,i)=>{
-          const code = App.countryData[i].code;
-          return (!window.activeCountryFilter || code===window.activeCountryFilter) ? c+'cc' : c+'33';
-        });
-        chart.data.datasets[0].backgroundColor = bg;
-        chart.update();
+        if (!els.length) applyCountryFilter(null);
+        else applyCountryFilter(App.countryData[els[0].index].code, { scroll: true });
       },
       plugins:{ legend:{display:false},
         tooltip:{ backgroundColor:'#1f2937', borderColor:'#374151', borderWidth:1, padding:12,
@@ -252,6 +272,8 @@ window.activeCountryFilter = null;
     },
     plugins: [createYAxisFlagBarPlugin('flags_racesByCountry', i => App.countryData[i].code)]
   });
+  window._countryChart = chart;
+  window._countryChartPalette = palette;
 })();
 
 
@@ -429,15 +451,13 @@ window.activeCountryFilter = null;
 
 (function() {
   const grid = document.getElementById('passportGrid');
-  App.countryData.sort((a,b)=>b.count-a.count).forEach(c=>{
+  App.countryData.forEach(c => {
     const el = document.createElement('div');
     el.className = 'passport-item';
-    el.title = `${c.name}: ${c.count} race${c.count>1?'s':''}`;
+    el.dataset.country = c.code;
+    el.title = `${c.name}: ${c.count} race${c.count > 1 ? 's' : ''} — click to list`;
     el.innerHTML = `<div class="passport-flag">${flagImgHtml(c.code, 40)}</div><div class="passport-name">${c.name}</div><div class="passport-count">${c.count}</div>`;
-    el.onclick = () => {
-      window.activeCountryFilter = window.activeCountryFilter===c.code ? null : c.code;
-      renderTable();
-    };
+    el.onclick = () => applyCountryFilter(c.code, { scroll: true });
     grid.appendChild(el);
   });
 })();
@@ -529,6 +549,10 @@ function renderTable(){
     return true;
   });
   if(window.activeCountryFilter) list = list.filter(r=>r.country===window.activeCountryFilter);
+  if(window.activeTimeBinFilter) {
+    const { min, max } = window.activeTimeBinFilter;
+    list = list.filter(r => r.minutes >= min && r.minutes < max);
+  }
   if(searchQuery){
     const q=searchQuery.toLowerCase();
     list = list.filter(r=>r.name.toLowerCase().includes(q)||(App.countryMap[r.country]?.name||'').toLowerCase().includes(q));
@@ -568,6 +592,17 @@ function renderTable(){
       <td>${actCell}</td>`;
     tbody.appendChild(tr);
   });
+
+  const titleEl = document.getElementById('allRacesTitle');
+  if (titleEl) {
+    if (window.activeCountryFilter) {
+      const c = App.countryMap[window.activeCountryFilter];
+      const name = c?.name || window.activeCountryFilter;
+      titleEl.textContent = `${name} — ${list.length} race${list.length !== 1 ? 's' : ''}`;
+    } else {
+      titleEl.textContent = 'All Races';
+    }
+  }
 }
 
 document.querySelectorAll('th[data-col]').forEach(th=>{
@@ -581,9 +616,40 @@ document.querySelectorAll('.filter-btn').forEach(btn=>{
   btn.addEventListener('click',()=>{
     document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
     btn.classList.add('active');
-    activeFilter=btn.dataset.filter; renderTable();
+    activeFilter=btn.dataset.filter;
+    window.activeTimeBinFilter = null;
+    if (window._distChartState) {
+      MarathonCharts.refreshDistHighlight(window._distChartState, null);
+    }
+    renderFilterChips();
+    renderTable();
   });
 });
+
+(function initYearFilterButtons() {
+  const bar = document.getElementById('filterBar');
+  if (!bar) return;
+  const years = [...new Set(App.races.map(r => r.year))].sort();
+  years.forEach(y => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'filter-btn';
+    btn.dataset.filter = String(y);
+    btn.textContent = String(y);
+    bar.appendChild(btn);
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeFilter = btn.dataset.filter;
+      window.activeTimeBinFilter = null;
+      if (window._distChartState) {
+        MarathonCharts.refreshDistHighlight(window._distChartState, null);
+      }
+      renderFilterChips();
+      renderTable();
+    });
+  });
+})();
 document.getElementById('searchInput').addEventListener('input',e=>{ searchQuery=e.target.value; renderTable(); });
 
 renderTable();

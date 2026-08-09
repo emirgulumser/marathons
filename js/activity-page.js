@@ -581,11 +581,6 @@
       parts.push(`<a class="export-btn" href="https://connect.garmin.com/modern/activity/${garminId}" target="_blank" rel="noopener">Open in Garmin Connect</a>`);
     }
     parts.push('<a class="export-btn" href="index.html">Race log</a>');
-    const srcUrl = typeof marathonSourceUrl === 'function' ? marathonSourceUrl(track) : null;
-    if (srcUrl) {
-      const label = track.sourceFormat === 'fit' || /\.(zip|fit)$/i.test(track.sourceFile || '') ? 'Download FIT' : 'Download file';
-      parts.push(`<a class="export-btn" href="${srcUrl}" download="${track.sourceFile || 'activity.zip'}">${label}</a>`);
-    }
     document.getElementById('gcActions').innerHTML = parts.join('');
   }
 
