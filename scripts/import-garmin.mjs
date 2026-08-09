@@ -150,7 +150,6 @@ function normalize(a) {
     minElev: a.minElevation != null ? Math.round(a.minElevation / 100) : null,
     maxElev: a.maxElevation != null ? Math.round(a.maxElevation / 100) : null,
     raceTag,
-    garminUrl: `https://connect.garmin.com/modern/activity/${id}`,
     raceLink: null,
   };
 }

@@ -526,7 +526,7 @@ window.RaceWeather = {
     const d = race?.difficulty;
     if (!d) return '<span style="color:var(--muted)">—</span>';
     const tip = d.dewPoint != null ? ` · dew ${d.dewPoint}°C` : '';
-    return `<span class="difficulty-badge" style="--diff-color:${d.color}" title="${d.score} · ${d.label}${tip}">${d.score} · ${d.label}</span>`;
+    return `<span class="difficulty-badge" style="--diff-color:${escapeHtml(d.color)}" title="${escapeHtml(`${d.score} · ${d.label}${tip}`)}">${escapeHtml(d.score)} · ${escapeHtml(d.label)}</span>`;
   },
 
   windowCell(race) {
@@ -535,7 +535,7 @@ window.RaceWeather = {
     const src = w.windowSource === 'garmin' ? 'Garmin'
       : w.windowSource === 'official' ? 'Official' : 'Estimated';
     const tip = [w.windowNote, src].filter(Boolean).join(' · ');
-    return `<span class="window-cell" title="${tip}">${w.windowStart}–${w.windowEnd}</span>`;
+    return `<span class="window-cell" title="${escapeHtml(tip)}">${escapeHtml(w.windowStart)}–${escapeHtml(w.windowEnd)}</span>`;
   },
 
   weatherCell(race) {
@@ -543,6 +543,6 @@ window.RaceWeather = {
     if (!w) return '<span style="color:var(--muted)">—</span>';
     const cond = w.conditions || this.weatherLabel(w.weatherCode);
     const precip = w.snowCm > 0 ? ` · ${w.snowCm}cm ❄` : w.rainMm > 0 ? ` · ${w.rainMm}mm 🌧` : '';
-    return `<span class="weather-cell" title="${this.weatherSummary(w)}">${Math.round(w.tempC)}°C · ${Math.round(w.windKph)}km/h${precip || ` · ${cond}`}</span>`;
+    return `<span class="weather-cell" title="${escapeHtml(this.weatherSummary(w))}">${Math.round(w.tempC)}°C · ${Math.round(w.windKph)}km/h${escapeHtml(precip || ` · ${cond}`)}</span>`;
   },
 };

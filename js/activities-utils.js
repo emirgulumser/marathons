@@ -440,7 +440,7 @@ window.ActivitiesUtils = (function () {
   function activityNameHtml(a, races) {
     const flag = raceFlagHtml(a, races);
     const badge = raceBadge(a);
-    const name = a.name || '';
+    const name = escapeHtml(a.name || '');
     if (!flag) return `${name}${badge}`;
     return `<span class="cell-flag-label">${flag}<span>${name}${badge}</span></span>`;
   }

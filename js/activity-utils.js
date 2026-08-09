@@ -460,10 +460,10 @@ window.openActivityPreview = function openActivityPreview(act) {
   const loc = act.location || (act.lat ? `${act.lat.toFixed(4)}, ${act.lng.toFixed(4)}` : 'No GPS data');
 
   document.getElementById('modalContent').innerHTML = `
-    <div class="modal-title">${act.name}</div>
-    <div class="modal-subtitle">${act.date} · ${tl}${act.location ? ` · ${act.location}` : ''}</div>
-    <div class="modal-time" style="color:#f97316">${act.km} km · ${act.duration} · ${act.pace}/km</div>
-    ${act.lat ? '<div class="act-modal-map act-preview-map" id="actPreviewMap"></div>' : `<p style="color:var(--muted);margin-top:12px">${loc}</p>`}
+    <div class="modal-title">${escapeHtml(act.name)}</div>
+    <div class="modal-subtitle">${escapeHtml(act.date)} · ${escapeHtml(tl)}${act.location ? ` · ${escapeHtml(act.location)}` : ''}</div>
+    <div class="modal-time" style="color:#f97316">${escapeHtml(act.km)} km · ${escapeHtml(act.duration)} · ${escapeHtml(act.pace)}/km</div>
+    ${act.lat ? '<div class="act-modal-map act-preview-map" id="actPreviewMap"></div>' : `<p style="color:var(--muted);margin-top:12px">${escapeHtml(loc)}</p>`}
     <div style="margin-top:14px;text-align:center">
       <button type="button" class="act-map-viewer-btn" id="actPreviewDetails">Full activity details</button>
     </div>`;
@@ -478,15 +478,15 @@ window.openActivityModal = function openActivityModal(act) {
   const tl = ActivityUtils.typeLabel(act.type);
   const rm = act.raceMatch;
   document.getElementById('modalContent').innerHTML = `
-    <div class="modal-title">${act.name}</div>
-    <div class="modal-subtitle">${act.date} · ${tl}${act.location ? ` · ${act.location}` : ''}</div>
-    <div class="modal-time" style="color:#f97316">${act.km} km · ${act.duration} · ${act.pace}/km</div>
+    <div class="modal-title">${escapeHtml(act.name)}</div>
+    <div class="modal-subtitle">${escapeHtml(act.date)} · ${escapeHtml(tl)}${act.location ? ` · ${escapeHtml(act.location)}` : ''}</div>
+    <div class="modal-time" style="color:#f97316">${escapeHtml(act.km)} km · ${escapeHtml(act.duration)} · ${escapeHtml(act.pace)}/km</div>
     ${act.isPr ? '<div style="color:#fbbf24;font-weight:700;margin-bottom:8px">⭐ Garmin Personal Record</div>' : ''}
-    ${rm ? `<div style="color:#22c55e;font-weight:700;margin-bottom:8px">🏅 Linked: ${rm.raceName} ${rm.raceYear} (${rm.officialTime})</div>` : ''}
+    ${rm ? `<div style="color:#22c55e;font-weight:700;margin-bottom:8px">🏅 Linked: ${escapeHtml(rm.raceName)} ${escapeHtml(rm.raceYear)} (${escapeHtml(rm.officialTime)})</div>` : ''}
     <div class="modal-grid">
       <div class="modal-stat-box"><div class="modal-stat-label">Avg HR</div><div class="modal-stat-val">${act.avgHr || '—'}${act.maxHr ? ` / ${act.maxHr}` : ''}</div></div>
       <div class="modal-stat-box"><div class="modal-stat-label">Elevation</div><div class="modal-stat-val">+${act.elevGain || 0}m${act.elevLoss ? ` / -${act.elevLoss}m` : ''}</div></div>
-      <div class="modal-stat-box"><div class="modal-stat-label">Training</div><div class="modal-stat-val">${act.trainingEffect || '—'}${act.trainingLoad ? ` · ${act.trainingLoad}` : ''}</div></div>
+      <div class="modal-stat-box"><div class="modal-stat-label">Training</div><div class="modal-stat-val">${escapeHtml(act.trainingEffect || '—')}${act.trainingLoad ? ` · ${escapeHtml(act.trainingLoad)}` : ''}</div></div>
       <div class="modal-stat-box"><div class="modal-stat-label">VO₂ Max</div><div class="modal-stat-val">${act.vo2max || '—'}</div></div>
       <div class="modal-stat-box"><div class="modal-stat-label">Calories</div><div class="modal-stat-val">${act.calories ? act.calories.toLocaleString() : '—'}</div></div>
       <div class="modal-stat-box"><div class="modal-stat-label">Power / Cadence</div><div class="modal-stat-val">${act.avgPower ? `${act.avgPower}W` : '—'}${act.cadence ? ` · ${act.cadence} spm` : ''}</div></div>

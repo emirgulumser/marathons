@@ -575,13 +575,7 @@
   }
 
   function renderActions(track, race, activity) {
-    const parts = [];
-    const garminId = activity?.id || track.activityId;
-    if (garminId) {
-      parts.push(`<a class="export-btn" href="https://connect.garmin.com/modern/activity/${garminId}" target="_blank" rel="noopener">Open in Garmin Connect</a>`);
-    }
-    parts.push('<a class="export-btn" href="index.html">Race log</a>');
-    document.getElementById('gcActions').innerHTML = parts.join('');
+    document.getElementById('gcActions').innerHTML = '<a class="export-btn" href="index.html">Race log</a>';
   }
 
   async function loadChartData(track, durationSec, detail) {

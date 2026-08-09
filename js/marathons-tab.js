@@ -212,7 +212,7 @@ function renderFilterChips() {
   }
   el.hidden = false;
   el.innerHTML = chips.map(c =>
-    `<button type="button" class="filter-chip" data-chip="${c.kind}">${c.label} <span aria-hidden="true">✕</span></button>`
+    `<button type="button" class="filter-chip" data-chip="${escapeHtml(c.kind)}">${escapeHtml(c.label)} <span aria-hidden="true">✕</span></button>`
   ).join('') + '<button type="button" class="filter-chip filter-chip--clear">Clear all</button>';
   el.querySelectorAll('.filter-chip').forEach(btn => {
     btn.onclick = () => {
@@ -456,7 +456,7 @@ function renderFilterChips() {
     el.className = 'passport-item';
     el.dataset.country = c.code;
     el.title = `${c.name}: ${c.count} race${c.count > 1 ? 's' : ''} — click to list`;
-    el.innerHTML = `<div class="passport-flag">${flagImgHtml(c.code, 40)}</div><div class="passport-name">${c.name}</div><div class="passport-count">${c.count}</div>`;
+    el.innerHTML = `<div class="passport-flag">${flagImgHtml(c.code, 40)}</div><div class="passport-name">${escapeHtml(c.name)}</div><div class="passport-count">${c.count}</div>`;
     el.onclick = () => applyCountryFilter(c.code, { scroll: true });
     grid.appendChild(el);
   });
@@ -471,7 +471,7 @@ function renderFilterChips() {
   const maxVal = Math.max(...Object.values(matrix));
 
   let html = '<table class="heatmap-table"><thead><tr><th class="year-head">Year</th>';
-  countries.forEach(c=>{ html+=`<th title="${c.name}" style="text-align:center;padding:6px 4px;vertical-align:middle">${flagImgHtml(c.code, 22)}</th>`; });
+  countries.forEach(c=>{ html+=`<th title="${escapeHtml(c.name)}" style="text-align:center;padding:6px 4px;vertical-align:middle">${flagImgHtml(c.code, 22)}</th>`; });
   html+='</tr></thead><tbody>';
 
   years.forEach(y=>{
@@ -481,13 +481,21 @@ function renderFilterChips() {
       const alpha = v===0?0:0.18+(v/maxVal)*0.75;
       const cls = v===0?'heat-cell empty':'heat-cell';
       const style = v>0?`background:rgba(249,115,22,${alpha.toFixed(2)});cursor:pointer`:'';
-      const click = v>0?`onclick="openHeatmapModal(${y},'${c.code}')"`:'' ;
-      html+=`<td class="${cls}" style="${style}" title="${c.name} ${y}: ${v||'no'} race${v!==1?'s':''}" ${click}>${v||''}</td>`;
+      const click = v>0?`data-heat-year="${y}" data-heat-country="${escapeHtml(c.code)}"`:'' ;
+      html+=`<td class="${cls}" style="${style}" title="${escapeHtml(`${c.name} ${y}: ${v||'no'} race${v!==1?'s':''}`)}" ${click}>${v||''}</td>`;
     });
     html+='</tr>';
   });
   html+='</tbody></table>';
-  document.getElementById('heatmapContainer').innerHTML = html;
+  const heatEl = document.getElementById('heatmapContainer');
+  if (heatEl) {
+    heatEl.innerHTML = html;
+    heatEl.querySelectorAll?.('[data-heat-year]')?.forEach(td => {
+      td.addEventListener('click', () => {
+        openHeatmapModal(Number(td.dataset.heatYear), td.dataset.heatCountry);
+      });
+    });
+  }
 })();
 
 
@@ -501,9 +509,9 @@ function renderFilterChips() {
     el.onclick = ()=>openModal(r);
     el.innerHTML = `
       <div class="podium-rank ${rankClass}">${i+1}</div>
-      <div class="podium-name">${r.name}${r.major?` <span class="major-badge">⭐ Major</span>`:''}</div>
-      <div class="podium-year">${r.year}</div>
-      <div class="podium-time" style="color:${timeColor(r.minutes)}">${r.time}</div>`;
+      <div class="podium-name">${escapeHtml(r.name)}${r.major?` <span class="major-badge">⭐ Major</span>`:''}</div>
+      <div class="podium-year">${escapeHtml(r.year)}</div>
+      <div class="podium-time" style="color:${timeColor(r.minutes)}">${escapeHtml(r.time)}</div>`;
     container.appendChild(el);
   });
 })();
@@ -573,7 +581,7 @@ function renderTable(){
       ? activityPageUrl({ activityId: track.activityId, raceName: r.name, raceYear: r.year })
       : null;
     const actCell = actHref
-      ? `<a class="export-btn race-activity-btn" href="${actHref}" title="Open activity page">Open</a>`
+      ? `<a class="export-btn race-activity-btn" href="${escapeHtml(actHref)}" title="Open activity page">Open</a>`
       : `<span style="color:var(--muted)">—</span>`;
     const tr = document.createElement('tr');
     tr.onclick = (e) => {
@@ -582,10 +590,10 @@ function renderTable(){
     };
     tr.innerHTML=`
       <td style="color:var(--muted)">${i+1}</td>
-      <td><span class="cell-flag-label">${flagImgHtml(r.country, 18)}<span>${r.name}${r.major?` <span class="major-badge">⭐</span>`:''}</span></span></td>
-      <td>${r.year}</td>
-      <td><span class="cell-flag-label">${flagImgHtml(r.country, 22)}<span>${c.name}</span></span></td>
-      <td class="time-cell ${tc}">${r.time}</td>
+      <td><span class="cell-flag-label">${flagImgHtml(r.country, 18)}<span>${escapeHtml(r.name)}${r.major?` <span class="major-badge">⭐</span>`:''}</span></span></td>
+      <td>${escapeHtml(r.year)}</td>
+      <td><span class="cell-flag-label">${flagImgHtml(r.country, 22)}<span>${escapeHtml(c.name)}</span></span></td>
+      <td class="time-cell ${tc}">${escapeHtml(r.time)}</td>
       <td>${typeof RaceWeather !== 'undefined' ? RaceWeather.weatherCell(r) : '—'}</td>
       <td>${typeof RaceWeather !== 'undefined' ? RaceWeather.difficultyBadge(r) : '—'}</td>
       <td style="color:var(--muted);font-size:0.8rem">#${r.rank} fastest</td>
@@ -859,8 +867,7 @@ if (typeof loadMarathonTracks === 'function') {
   const majors=App.races.filter(r=>r.major).sort((a,b)=>a.idx-b.idx);
   let html=`<div style="display:flex;align-items:center;padding:24px 8px;overflow-x:auto">`;
   majors.forEach((r,i)=>{
-    html+=`<div style="display:flex;flex-direction:column;align-items:center;gap:8px;min-width:110px;cursor:pointer"
-      onclick="openModal(App.races[${r.idx-1}])">
+    html+=`<div class="majors-timeline-item" data-race-idx="${r.idx-1}" style="display:flex;flex-direction:column;align-items:center;gap:8px;min-width:110px;cursor:pointer">
       <div style="display:flex;justify-content:center;align-items:center;min-height:44px">${flagImgHtml(r.country, 40)}</div>
       <div style="width:44px;height:44px;border-radius:50%;
         background:linear-gradient(135deg,#fbbf24,#f97316);
@@ -868,9 +875,9 @@ if (typeof loadMarathonTracks === 'function') {
         font-weight:800;font-size:1rem;color:#000;
         box-shadow:0 0 0 4px rgba(251,191,36,0.25);position:relative;z-index:1">${i+1}</div>
       <div style="text-align:center">
-        <div style="font-weight:700;font-size:0.88rem">${r.name}</div>
-        <div style="color:var(--muted);font-size:0.75rem">${r.year}</div>
-        <div style="color:#22c55e;font-weight:800;font-size:0.9rem;margin-top:2px">${r.time}</div>
+        <div style="font-weight:700;font-size:0.88rem">${escapeHtml(r.name)}</div>
+        <div style="color:var(--muted);font-size:0.75rem">${escapeHtml(r.year)}</div>
+        <div style="color:#22c55e;font-weight:800;font-size:0.9rem;margin-top:2px">${escapeHtml(r.time)}</div>
       </div></div>
     ${i<majors.length-1?`<div style="flex:1;height:2px;background:linear-gradient(90deg,#fbbf24,#f97316);min-width:20px;margin-bottom:52px;opacity:0.45"></div>`:''}`;
   });
@@ -878,7 +885,13 @@ if (typeof loadMarathonTracks === 'function') {
     color:var(--muted);font-size:0.8rem">
     All 6 Abbott World Marathon Majors completed &nbsp;·&nbsp;
     Best major: London 2024 (2:53) &nbsp;·&nbsp; Slowest: New York 2019 (3:42)</div>`;
-  document.getElementById('majorsTimeline').innerHTML=html;
+  const majorsEl = document.getElementById('majorsTimeline');
+  if (majorsEl) {
+    majorsEl.innerHTML=html;
+    majorsEl.querySelectorAll?.('.majors-timeline-item')?.forEach(el => {
+      el.addEventListener('click', () => openModal(App.races[Number(el.dataset.raceIdx)]));
+    });
+  }
 })();
 
 (function(){

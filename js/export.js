@@ -49,11 +49,11 @@ window.exportActivitiesCSV = function exportActivitiesCSV() {
   const U = window.ActivitiesUtils;
   const list = U ? U.filterActivities(App.activities || [], U.getFilters()) : (App.activities || []);
   const rows = [
-    ['Date', 'Name', 'Type', 'Distance (km)', 'Duration (sec)', 'Pace (min/km)', 'Location', 'Avg HR', 'Max HR', 'Elevation (m)', 'Calories', 'Race tag', 'Garmin URL'],
+    ['Date', 'Name', 'Type', 'Distance (km)', 'Duration (sec)', 'Pace (min/km)', 'Location', 'Avg HR', 'Max HR', 'Elevation (m)', 'Calories', 'Race tag'],
     ...list.map(a => [
       a.date, a.name, a.type, a.distKm, a.durationSec, a.paceMinKm ?? '',
       a.location ?? '', a.avgHr ?? '', a.maxHr ?? '', a.elevGainM ?? '', a.calories ?? '',
-      a.raceTag ?? '', a.garminUrl ?? '',
+      a.raceTag ?? '',
     ]),
   ];
   downloadCSV('garmin-activities.csv', rows);

@@ -1702,7 +1702,7 @@ window.initActivitiesTab = async function () {
         <td>${a.distKm > 0 ? a.distKm.toFixed(2) : '—'}</td>
         <td>${U.fmtDuration(a.durationSec)}</td>
         <td>${U.fmtPace(a.paceMinKm)}</td>
-        <td style="color:var(--muted)">${a.location || '—'}</td>`;
+        <td style="color:var(--muted)">${escapeHtml(a.location || '—')}</td>`;
       tr.querySelector('td:nth-child(3)')?.addEventListener('click', e => e.stopPropagation());
       tr.onclick = e => {
         if (e.target.type === 'checkbox') return;
@@ -1754,11 +1754,16 @@ window.initActivitiesTab = async function () {
       <div class="compare-bar-inner">
         <strong>Compare</strong>
         <div class="compare-cols">
-          <div><b>${a.date}</b> ${a.distKm} km · ${U.fmtPace(a.paceMinKm)} · ${U.fmtDuration(a.durationSec)}${a.avgHr ? ' · ' + a.avgHr + ' bpm' : ''}</div>
-          <div><b>${b.date}</b> ${b.distKm} km · ${U.fmtPace(b.paceMinKm)} · ${U.fmtDuration(b.durationSec)}${b.avgHr ? ' · ' + b.avgHr + ' bpm' : ''}</div>
+          <div><b>${escapeHtml(a.date)}</b> ${escapeHtml(a.distKm)} km · ${escapeHtml(U.fmtPace(a.paceMinKm))} · ${escapeHtml(U.fmtDuration(a.durationSec))}${a.avgHr ? ' · ' + escapeHtml(a.avgHr) + ' bpm' : ''}</div>
+          <div><b>${escapeHtml(b.date)}</b> ${escapeHtml(b.distKm)} km · ${escapeHtml(U.fmtPace(b.paceMinKm))} · ${escapeHtml(U.fmtDuration(b.durationSec))}${b.avgHr ? ' · ' + escapeHtml(b.avgHr) + ' bpm' : ''}</div>
         </div>
-        <button class="page-btn" onclick="window.actCompareIds=[];document.getElementById('actCompareBar').hidden=true;refreshActivitiesView()">Clear</button>
+        <button class="page-btn" type="button" id="actCompareClear">Clear</button>
       </div>`;
+    document.getElementById('actCompareClear')?.addEventListener('click', () => {
+      window.actCompareIds = [];
+      document.getElementById('actCompareBar').hidden = true;
+      refreshActivitiesView();
+    });
   }
 
   window.openActModal = function (a) {
@@ -1767,22 +1772,20 @@ window.initActivitiesTab = async function () {
     const similar = U.findSimilar(a, activities);
     let raceHtml = '';
     let raceActions = '';
+    const matchedRace = a.raceLink?.kind === 'marathon' && a.raceLink.raceName && a.raceLink.raceYear
+      ? App.races.find(r => r.name === a.raceLink.raceName && r.year === a.raceLink.raceYear)
+      : null;
     if (a.raceLink) {
       const rl = a.raceLink;
       const statusLabel = rl.status === 'matched' ? 'Matched' : rl.status === 'unverified' ? 'Matched (time differs)' : rl.status;
       const times = rl.garminTime && rl.logTime
         ? ` · Garmin ${rl.garminTime} · Log ${rl.logTime}`
         : rl.logTime ? ` · Log ${rl.logTime}` : '';
-      raceHtml = `<div style="margin:8px 0;color:var(--muted)">${statusLabel}${rl.raceName ? ' · ' + rl.raceName + ' ' + rl.raceYear : ''}${times}</div>`;
+      raceHtml = `<div style="margin:8px 0;color:var(--muted)">${escapeHtml(statusLabel)}${rl.raceName ? ' · ' + escapeHtml(rl.raceName) + ' ' + escapeHtml(rl.raceYear) : ''}${escapeHtml(times)}</div>`;
       if (rl.kind === 'marathon' && rl.raceName && rl.raceYear) {
-        const rn = rl.raceName.replace(/'/g, "\\'");
-        const matchedRace = App.races.find(r => r.name === rl.raceName && r.year === rl.raceYear);
-        const raceOpen = matchedRace
-          ? `<button type="button" class="export-btn" onclick="closeModal();setTimeout(()=>openModal(App.races[${matchedRace.idx - 1}]),120)">Marathon detail</button>`
-          : '';
         raceActions = `
-          ${raceOpen}
-          <button type="button" class="export-btn" onclick="closeModal();openMarathonTrainingBlock('${rn}',${rl.raceYear})">12-week build</button>
+          ${matchedRace ? '<button type="button" class="export-btn" id="actModalRaceDetail">Marathon detail</button>' : ''}
+          <button type="button" class="export-btn" id="actModalBuildBtn">12-week build</button>
           <button type="button" class="export-btn" id="actModalRouteBtn" hidden>Race route</button>`;
       }
     }
@@ -1799,30 +1802,38 @@ window.initActivitiesTab = async function () {
 
     document.getElementById('modalContent').innerHTML = `
       ${marathonFlag ? `<div class="modal-flag">${marathonFlag}</div>` : ''}
-      <div class="modal-title">${a.name}</div>
-      <div class="modal-subtitle">${a.date} · ${U.typeLabel(a.type)}${a.location ? ' · ' + a.location : ''}</div>
-      <div class="modal-time" style="color:#f97316">${a.distKm > 0 ? a.distKm.toFixed(2) + ' km' : U.fmtDuration(a.durationSec)}</div>
+      <div class="modal-title">${escapeHtml(a.name)}</div>
+      <div class="modal-subtitle">${escapeHtml(a.date)} · ${escapeHtml(U.typeLabel(a.type))}${a.location ? ' · ' + escapeHtml(a.location) : ''}</div>
+      <div class="modal-time" style="color:#f97316">${a.distKm > 0 ? escapeHtml(a.distKm.toFixed(2)) + ' km' : escapeHtml(U.fmtDuration(a.durationSec))}</div>
       ${raceHtml}
       <div class="modal-grid">
-        <div class="modal-stat-box"><div class="modal-stat-label">Duration</div><div class="modal-stat-val">${U.fmtDuration(a.durationSec)}</div></div>
-        <div class="modal-stat-box"><div class="modal-stat-label">Pace</div><div class="modal-stat-val">${U.fmtPace(a.paceMinKm)}</div></div>
-        ${a.avgHr ? `<div class="modal-stat-box"><div class="modal-stat-label">Avg HR</div><div class="modal-stat-val">${a.avgHr}</div></div>` : ''}
-        ${a.maxHr ? `<div class="modal-stat-box"><div class="modal-stat-label">Max HR</div><div class="modal-stat-val">${a.maxHr}</div></div>` : ''}
-        ${a.elevGainM ? `<div class="modal-stat-box"><div class="modal-stat-label">Elevation</div><div class="modal-stat-val">+${a.elevGainM} m</div></div>` : ''}
-        ${a.calories ? `<div class="modal-stat-box"><div class="modal-stat-label">Calories</div><div class="modal-stat-val">${a.calories}</div></div>` : ''}
-        ${extras.map(([l, v]) => `<div class="modal-stat-box"><div class="modal-stat-label">${l}</div><div class="modal-stat-val">${v}</div></div>`).join('')}
+        <div class="modal-stat-box"><div class="modal-stat-label">Duration</div><div class="modal-stat-val">${escapeHtml(U.fmtDuration(a.durationSec))}</div></div>
+        <div class="modal-stat-box"><div class="modal-stat-label">Pace</div><div class="modal-stat-val">${escapeHtml(U.fmtPace(a.paceMinKm))}</div></div>
+        ${a.avgHr ? `<div class="modal-stat-box"><div class="modal-stat-label">Avg HR</div><div class="modal-stat-val">${escapeHtml(a.avgHr)}</div></div>` : ''}
+        ${a.maxHr ? `<div class="modal-stat-box"><div class="modal-stat-label">Max HR</div><div class="modal-stat-val">${escapeHtml(a.maxHr)}</div></div>` : ''}
+        ${a.elevGainM ? `<div class="modal-stat-box"><div class="modal-stat-label">Elevation</div><div class="modal-stat-val">+${escapeHtml(a.elevGainM)} m</div></div>` : ''}
+        ${a.calories ? `<div class="modal-stat-box"><div class="modal-stat-label">Calories</div><div class="modal-stat-val">${escapeHtml(a.calories)}</div></div>` : ''}
+        ${extras.map(([l, v]) => `<div class="modal-stat-box"><div class="modal-stat-label">${escapeHtml(l)}</div><div class="modal-stat-val">${escapeHtml(v)}</div></div>`).join('')}
       </div>
       ${marathonRouteSectionHtml()}
       ${typeof gpxChartsSectionHtml === 'function' ? gpxChartsSectionHtml() : ''}
-      ${similar.length ? `<div class="similar-runs"><div class="section-title" style="font-size:0.9rem;margin-top:12px">Similar runs</div>${similar.map(s => `<div class="similar-run-item" data-id="${s.id}">${s.date} · ${s.distKm} km · ${U.fmtPace(s.paceMinKm)}</div>`).join('')}</div>` : ''}
+      ${similar.length ? `<div class="similar-runs"><div class="section-title" style="font-size:0.9rem;margin-top:12px">Similar runs</div>${similar.map(s => `<div class="similar-run-item" data-id="${s.id}">${escapeHtml(s.date)} · ${escapeHtml(s.distKm)} km · ${escapeHtml(U.fmtPace(s.paceMinKm))}</div>`).join('')}</div>` : ''}
       <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:10px" id="actModalActions">
         ${raceActions}
         <a class="export-btn" id="actModalActivityPage" hidden>Open activity page</a>
-        <a class="export-btn" href="${a.garminUrl}" target="_blank" rel="noopener">View on Garmin</a>
       </div>`;
     document.querySelectorAll('.similar-run-item').forEach(el => {
       el.onclick = () => openActModal(findActivity(Number(el.dataset.id)));
       el.style.cursor = 'pointer';
+    });
+    document.getElementById('actModalRaceDetail')?.addEventListener('click', () => {
+      if (!matchedRace) return;
+      closeModal();
+      setTimeout(() => openModal(matchedRace), 120);
+    });
+    document.getElementById('actModalBuildBtn')?.addEventListener('click', () => {
+      closeModal();
+      openMarathonTrainingBlock(a.raceLink.raceName, a.raceLink.raceYear);
     });
     document.getElementById('modal').classList.add('open');
 

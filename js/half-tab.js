@@ -239,7 +239,7 @@ const halfRaces = App.halfRaces;
     el.title = `${d.city}: ${d.count} race${d.count>1?'s':''}`;
     el.innerHTML = `
       <div class="passport-flag">${flagImgHtml(d.country, 40)}</div>
-      <div class="passport-name">${d.city}</div>
+      <div class="passport-name">${escapeHtml(d.city)}</div>
       <div class="passport-count">${d.count}</div>`;
     grid.appendChild(el);
   });
@@ -272,10 +272,10 @@ const halfRaces = App.halfRaces;
       tr.onclick = () => window.openHalfModal(r);
       tr.innerHTML = `
         <td style="color:var(--muted)">${i + 1}</td>
-        <td><span class="cell-flag-label">${flagImgHtml(r.country, 18)}<span>${r.name}${r.isPB ? ' 🏆' : ''}</span></span></td>
-        <td>${r.year}</td>
-        <td><span class="cell-flag-label">${flagImgHtml(r.country, 22)}<span>${c.name}</span></span></td>
-        <td class="time-cell ${r.minutes < 90 ? 'sub3' : r.minutes < 95 ? 'fast' : ''}">${r.time}</td>
+        <td><span class="cell-flag-label">${flagImgHtml(r.country, 18)}<span>${escapeHtml(r.name)}${r.isPB ? ' 🏆' : ''}</span></span></td>
+        <td>${escapeHtml(r.year)}</td>
+        <td><span class="cell-flag-label">${flagImgHtml(r.country, 22)}<span>${escapeHtml(c.name)}</span></span></td>
+        <td class="time-cell ${r.minutes < 90 ? 'sub3' : r.minutes < 95 ? 'fast' : ''}">${escapeHtml(r.time)}</td>
         <td style="color:var(--muted);font-size:0.8rem">#${r.rank} fastest</td>`;
       tbody.appendChild(tr);
     });
@@ -285,9 +285,9 @@ const halfRaces = App.halfRaces;
     const c = halfCountryMap[r.country] || { name: r.country };
     document.getElementById('modalContent').innerHTML = `
       <div class="modal-flag">${flagImgHtml(r.country, 48)}</div>
-      <div class="modal-title">${r.name}</div>
-      <div class="modal-subtitle">${r.year} · ${c.name} · Half Marathon</div>
-      <div class="modal-time" style="color:#22c55e">${r.time}</div>
+      <div class="modal-title">${escapeHtml(r.name)}</div>
+      <div class="modal-subtitle">${escapeHtml(r.year)} · ${escapeHtml(c.name)} · Half Marathon</div>
+      <div class="modal-time" style="color:#22c55e">${escapeHtml(r.time)}</div>
       ${r.isPB ? '<div style="color:#fbbf24;font-weight:700;margin-bottom:8px">🏆 Personal Best!</div>' : ''}
       <div class="modal-grid">
         <div class="modal-stat-box"><div class="modal-stat-label">Overall Rank</div><div class="modal-stat-val">#${r.rank} / ${halfRaces.length}</div></div>

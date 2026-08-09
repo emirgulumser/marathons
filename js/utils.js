@@ -7,6 +7,17 @@ const fmtTime   = m => {
 };
 const timeColor = m => m<175?'#fbbf24': m<180?'#22c55e': m<195?'#86efac': m>=240?'#ef4444':'#3b82f6';
 
+/** Escape text for safe insertion into HTML (text content / attributes). */
+function escapeHtml(value) {
+  if (value == null) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 /** ISO 3166-1 alpha-2 for flag images (emoji flags are unreliable on Windows). */
 const COUNTRY_ISO2 = {
   TUR:'tr', GER:'de', NOR:'no', NED:'nl', DEN:'dk', USA:'us', UK:'gb', SER:'rs',

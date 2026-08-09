@@ -33,8 +33,8 @@ window.renderGoals = function renderGoals() {
       <div class="goal-card${done ? ' achieved' : ''}">
         <div class="goal-icon">${done ? '✅' : '🎯'}</div>
         <div class="goal-body">
-          <div class="goal-label">${t.label}</div>
-          <div class="goal-detail">${detail}</div>
+          <div class="goal-label">${escapeHtml(t.label)}</div>
+          <div class="goal-detail">${escapeHtml(detail)}</div>
           <div class="goal-bar"><div class="goal-fill" style="width:${progress}%"></div></div>
         </div>
       </div>`;

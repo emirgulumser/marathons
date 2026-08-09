@@ -8,20 +8,20 @@ window.openModal = function openModal(race) {
   const pb = App.stats?.pbMinutes ?? Math.min(...App.races.map(r => r.minutes));
   const RW = window.RaceWeather;
   const weatherBlock = race.weather && RW ? `
-    <div class="modal-section-title">Race-time weather${race.weather.windowStart ? ` (${race.weather.windowStart}–${race.weather.windowEnd}${race.weather.windowSource === 'garmin' ? ' · Garmin' : race.weather.windowSource === 'official' ? ' · official start' : ''})` : ''}</div>
+    <div class="modal-section-title">Race-time weather${race.weather.windowStart ? ` (${escapeHtml(race.weather.windowStart)}–${escapeHtml(race.weather.windowEnd)}${race.weather.windowSource === 'garmin' ? ' · Garmin' : race.weather.windowSource === 'official' ? ' · official start' : ''})` : ''}</div>
     <div class="modal-grid">
       <div class="modal-stat-box">
         <div class="modal-stat-label">Race window</div>
-        <div class="modal-stat-val">${race.weather.windowStart || '—'}–${race.weather.windowEnd || '—'}${race.weather.windowSource === 'garmin' ? ' · Garmin' : race.weather.windowSource === 'official' ? ' · Official' : ''}</div>
+        <div class="modal-stat-val">${escapeHtml(race.weather.windowStart || '—')}–${escapeHtml(race.weather.windowEnd || '—')}${race.weather.windowSource === 'garmin' ? ' · Garmin' : race.weather.windowSource === 'official' ? ' · Official' : ''}</div>
       </div>
       <div class="modal-stat-box">
         <div class="modal-stat-label">Conditions</div>
-        <div class="modal-stat-val">${race.weather.conditions}${race.raceDate ? ` · ${race.raceDate}` : ''}</div>
+        <div class="modal-stat-val">${escapeHtml(race.weather.conditions)}${race.raceDate ? ` · ${escapeHtml(race.raceDate)}` : ''}</div>
       </div>
       <div class="modal-stat-box">
         <div class="modal-stat-label">Temperature</div>
         <div class="modal-stat-val">${race.weather.tempMin != null && race.weather.tempMax != null ? `${Math.round(race.weather.tempMin)}–${Math.round(race.weather.tempMax)}°C` : `${Math.round(race.weather.tempC)}°C`} · ${race.weather.humidity}% humidity</div>
-        ${race.weather.weatherNote ? `<div style="font-size:0.75rem;color:var(--muted);margin-top:6px">${race.weather.weatherNote}</div>` : ''}
+        ${race.weather.weatherNote ? `<div style="font-size:0.75rem;color:var(--muted);margin-top:6px">${escapeHtml(race.weather.weatherNote)}</div>` : ''}
       </div>
       <div class="modal-stat-box">
         <div class="modal-stat-label">Feels like</div>
@@ -37,16 +37,16 @@ window.openModal = function openModal(race) {
       </div>
       <div class="modal-stat-box">
         <div class="modal-stat-label">Difficulty</div>
-        <div class="modal-stat-val" style="color:${race.difficulty?.color || 'inherit'}">${race.difficulty?.score ?? '—'} · ${race.difficulty?.label ?? '—'}</div>
+        <div class="modal-stat-val" style="color:${escapeHtml(race.difficulty?.color || 'inherit')}">${escapeHtml(race.difficulty?.score ?? '—')} · ${escapeHtml(race.difficulty?.label ?? '—')}</div>
       </div>
     </div>
-    ${race.difficulty?.factors?.length ? `<div class="difficulty-factors">${race.difficulty.factors.map(f => `<span class="difficulty-factor">${f.label} +${f.value}</span>`).join('')}</div>` : ''}` : '';
+    ${race.difficulty?.factors?.length ? `<div class="difficulty-factors">${race.difficulty.factors.map(f => `<span class="difficulty-factor">${escapeHtml(f.label)} +${escapeHtml(f.value)}</span>`).join('')}</div>` : ''}` : '';
 
   document.getElementById('modalContent').innerHTML = `
     <div class="modal-flag">${flagImgHtml(race.country, 48)}</div>
-    <div class="modal-title">${race.name}</div>
-    <div class="modal-subtitle">${race.year} · ${c.name}${race.major ? ' · <span class="major-badge">⭐ World Major</span>' : ''}</div>
-    <div class="modal-time" style="color:${tc}">${race.time}</div>
+    <div class="modal-title">${escapeHtml(race.name)}</div>
+    <div class="modal-subtitle">${escapeHtml(race.year)} · ${escapeHtml(c.name)}${race.major ? ' · <span class="major-badge">⭐ World Major</span>' : ''}</div>
+    <div class="modal-time" style="color:${tc}">${escapeHtml(race.time)}</div>
     ${race.isPB ? '<div style="color:#fbbf24;font-weight:700;margin-bottom:8px">🏆 Personal Best at the time!</div>' : ''}
     <div class="modal-grid">
       <div class="modal-stat-box">
@@ -54,7 +54,7 @@ window.openModal = function openModal(race) {
         <div class="modal-stat-val">#${race.rank} / ${App.races.length}</div>
       </div>
       <div class="modal-stat-box">
-        <div class="modal-stat-label">Rank in ${race.year}</div>
+        <div class="modal-stat-label">Rank in ${escapeHtml(race.year)}</div>
         <div class="modal-stat-val">#${yearRank} / ${yearRaces.length}</div>
       </div>
       <div class="modal-stat-box">
@@ -70,9 +70,13 @@ window.openModal = function openModal(race) {
     ${marathonRouteSectionHtml()}
     ${typeof gpxChartsSectionHtml === 'function' ? gpxChartsSectionHtml() : ''}
     <div style="margin-top:16px;display:flex;flex-wrap:wrap;gap:10px" id="marathonModalActions">
-      <button type="button" class="export-btn" onclick="closeModal();openMarathonTrainingBlock('${race.name.replace(/'/g, "\\'")}',${race.year})">View 12-week build</button>
+      <button type="button" class="export-btn" id="marathonModalBuildBtn">View 12-week build</button>
     </div>`;
   document.getElementById('modal').classList.add('open');
+  document.getElementById('marathonModalBuildBtn')?.addEventListener('click', () => {
+    closeModal();
+    openMarathonTrainingBlock(race.name, race.year);
+  });
 
   loadMarathonTracks().then(tracks => {
     const track = tracks[marathonRaceKey(race)];
@@ -81,8 +85,12 @@ window.openModal = function openModal(race) {
     const actions = document.getElementById('marathonModalActions');
     if (actions && !actions.querySelector('[data-activity-page]')) {
       const href = activityPageUrl({ activityId: track.activityId, raceName: race.name, raceYear: race.year });
-      actions.insertAdjacentHTML('afterbegin',
-        `<a class="export-btn" data-activity-page href="${href}">Open activity page</a>`);
+      const a = document.createElement('a');
+      a.className = 'export-btn';
+      a.dataset.activityPage = '';
+      a.href = href;
+      a.textContent = 'Open activity page';
+      actions.prepend(a);
     }
     if (typeof mountGpxCharts === 'function') mountGpxCharts(track);
   });
@@ -105,24 +113,22 @@ window.openHeatmapModal = function openHeatmapModal(year, countryCode) {
   const avgMin = Math.round(list.reduce((s, r) => s + r.minutes, 0) / list.length);
 
   const rows = list.map(r => `
-    <div onclick="closeModal();setTimeout(()=>openModal(App.races[${r.idx - 1}]),120)"
+    <div class="heatmap-race-row" data-race-idx="${r.idx - 1}"
          style="background:var(--card2);border:1px solid var(--border);border-radius:10px;
                 padding:13px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;
-                transition:border-color 0.15s"
-         onmouseover="this.style.borderColor='#f97316'"
-         onmouseout="this.style.borderColor='var(--border)'">
+                transition:border-color 0.15s">
       <div style="flex:1">
-        <div style="font-weight:700;font-size:0.95rem">${r.name}${r.major ? ` <span class="major-badge">⭐</span>` : ''}</div>
+        <div style="font-weight:700;font-size:0.95rem">${escapeHtml(r.name)}${r.major ? ` <span class="major-badge">⭐</span>` : ''}</div>
         <div style="font-size:0.75rem;color:var(--muted);margin-top:3px">#${r.rank} fastest overall · click for full detail</div>
       </div>
-      <div style="font-size:1.25rem;font-weight:800;color:${timeColor(r.minutes)};font-variant-numeric:tabular-nums">${r.time}</div>
+      <div style="font-size:1.25rem;font-weight:800;color:${timeColor(r.minutes)};font-variant-numeric:tabular-nums">${escapeHtml(r.time)}</div>
     </div>`).join('');
 
   const summary = list.length > 1 ? `
     <div class="modal-grid" style="margin-top:16px">
       <div class="modal-stat-box">
         <div class="modal-stat-label">Best</div>
-        <div class="modal-stat-val" style="color:#22c55e">${list[0].time}</div>
+        <div class="modal-stat-val" style="color:#22c55e">${escapeHtml(list[0].time)}</div>
       </div>
       <div class="modal-stat-box">
         <div class="modal-stat-label">Average</div>
@@ -130,7 +136,7 @@ window.openHeatmapModal = function openHeatmapModal(year, countryCode) {
       </div>
       <div class="modal-stat-box">
         <div class="modal-stat-label">Slowest</div>
-        <div class="modal-stat-val" style="color:var(--muted)">${list[list.length - 1].time}</div>
+        <div class="modal-stat-val" style="color:var(--muted)">${escapeHtml(list[list.length - 1].time)}</div>
       </div>
       <div class="modal-stat-box">
         <div class="modal-stat-label">Races</div>
@@ -140,10 +146,20 @@ window.openHeatmapModal = function openHeatmapModal(year, countryCode) {
 
   document.getElementById('modalContent').innerHTML = `
     <div class="modal-flag">${flagImgHtml(countryCode, 48)}</div>
-    <div class="modal-title">${c.name}</div>
-    <div class="modal-subtitle">${year} · ${list.length} race${list.length > 1 ? 's' : ''}</div>
+    <div class="modal-title">${escapeHtml(c.name)}</div>
+    <div class="modal-subtitle">${escapeHtml(year)} · ${list.length} race${list.length > 1 ? 's' : ''}</div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">${rows}</div>
     ${summary}`;
+
+  document.querySelectorAll('.heatmap-race-row').forEach(el => {
+    el.addEventListener('mouseover', () => { el.style.borderColor = '#f97316'; });
+    el.addEventListener('mouseout', () => { el.style.borderColor = 'var(--border)'; });
+    el.addEventListener('click', () => {
+      const idx = Number(el.dataset.raceIdx);
+      closeModal();
+      setTimeout(() => openModal(App.races[idx]), 120);
+    });
+  });
 
   document.getElementById('modal').classList.add('open');
 };

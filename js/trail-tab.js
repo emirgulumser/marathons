@@ -35,13 +35,13 @@ const cardContainer = document.getElementById('trailCards');
   const div = document.createElement('div');
   div.className = `trail-card${t.podium?' podium':''}`;
   div.innerHTML = `
-    ${t.podium?`<div class="podium-ribbon">🏆 ${t.podium}</div>`:''}
-    <div class="trail-card-name">${t.name}</div>
-    <div class="trail-card-meta">${t.year} · ${t.dist} km</div>
+    ${t.podium?`<div class="podium-ribbon">🏆 ${escapeHtml(t.podium)}</div>`:''}
+    <div class="trail-card-name">${escapeHtml(t.name)}</div>
+    <div class="trail-card-meta">${escapeHtml(t.year)} · ${escapeHtml(t.dist)} km</div>
     <div class="trail-card-stats">
-      <div class="trail-stat"><div class="trail-stat-label">Finish Time</div><div class="trail-stat-val" style="color:#22c55e">${t.time}</div></div>
+      <div class="trail-stat"><div class="trail-stat-label">Finish Time</div><div class="trail-stat-val" style="color:#22c55e">${escapeHtml(t.time)}</div></div>
       <div class="trail-stat"><div class="trail-stat-label">Avg Pace</div><div class="trail-stat-val">${Math.floor(t.pacePerKm)}'${Math.round((t.pacePerKm%1)*60).toString().padStart(2,'0')}" /km</div></div>
-      <div class="trail-stat"><div class="trail-stat-label">Distance</div><div class="trail-stat-val">${t.dist} km</div></div>
+      <div class="trail-stat"><div class="trail-stat-label">Distance</div><div class="trail-stat-val">${escapeHtml(t.dist)} km</div></div>
     </div>`;
   cardContainer.appendChild(div);
 });

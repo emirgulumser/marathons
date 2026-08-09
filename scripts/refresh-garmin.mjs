@@ -7,7 +7,7 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -65,13 +65,14 @@ const connectDir = path.join(root, 'DI_CONNECT');
 fs.mkdirSync(connectDir, { recursive: true });
 
 console.log(`Extracting fitness data from ${path.basename(zipPath)}…`);
-execSync(
-  `unzip -o -q "${zipPath}" "DI_CONNECT/DI-Connect-Fitness/*" -d "${root}"`,
+execFileSync(
+  'unzip',
+  ['-o', '-q', zipPath, 'DI_CONNECT/DI-Connect-Fitness/*', '-d', root],
   { stdio: 'inherit' }
 );
 
 console.log('Running import-garmin.mjs…');
-execSync('node scripts/import-garmin.mjs', { cwd: root, stdio: 'inherit' });
+execFileSync(process.execPath, ['scripts/import-garmin.mjs'], { cwd: root, stdio: 'inherit' });
 
 if (args.updateTraining) {
   const activitiesPath = path.join(root, 'data', 'activities.json');
