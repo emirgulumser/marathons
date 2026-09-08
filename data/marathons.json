@@ -565,5 +565,14 @@
     "major": false,
     "lat": 54.096,
     "lng": 12.133
+  },
+  {
+    "name": "Stavanger",
+    "year": 2026,
+    "time": "3:15",
+    "country": "NOR",
+    "major": false,
+    "lat": 58.97,
+    "lng": 5.73
   }
 ]

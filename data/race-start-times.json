@@ -43,13 +43,15 @@
     "Spitsbergen": { "start": "10:00", "source": "Spitsbergen Marathon (Helmaraton)" },
     "Midnight Sun": { "start": "20:30", "source": "Midnight Sun Marathon Tromsø" },
     "Polar Night": { "start": "13:00", "source": "Ishavskraft Marathon Tromsø (full marathon)" },
-    "Rostock Night": { "start": "18:00", "source": "hella marathon nacht rostock (42K mass start, Haedgehalbinsel)" }
+    "Rostock Night": { "start": "18:00", "source": "hella marathon nacht rostock (42K mass start, Haedgehalbinsel)" },
+    "Stavanger": { "start": "08:45", "source": "Stavanger Marathon (42K mass start, Domkirkeplassen)" }
   },
   "overrides": {
     "Boston|2018": { "start": "10:00", "source": "BAA Wave 1 / Elite Men start (10:00 ET)" },
     "Stockholm|2019": { "start": "12:00", "source": "2019: start groups A–E at 12:00" },
     "Chitose|2025": { "start": "09:30", "source": "2025: A-block full marathon start (9:30)" },
     "Stockholm|2026": { "start": "12:16", "source": "2026: wave 3 at 12:16 (groups G–J)" },
-    "Rostock Night|2026": { "date": "2026-08-01", "start": "18:00", "source": "hella marathon nacht rostock 2026 (Sat 1 Aug, 18:00)" }
+    "Rostock Night|2026": { "date": "2026-08-01", "start": "18:00", "source": "hella marathon nacht rostock 2026 (Sat 1 Aug, 18:00)" },
+    "Stavanger|2026": { "date": "2026-08-29", "start": "08:45", "source": "Stavanger Marathon 2026 (Sat 29 Aug, 08:45)" }
   }
 }
