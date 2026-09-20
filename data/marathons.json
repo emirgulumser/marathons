@@ -574,5 +574,14 @@
     "major": false,
     "lat": 58.97,
     "lng": 5.73
+  },
+  {
+    "name": "Oslo",
+    "year": 2026,
+    "time": "3:20",
+    "country": "NOR",
+    "major": false,
+    "lat": 59.91,
+    "lng": 10.73
   }
 ]

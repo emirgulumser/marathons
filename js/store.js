@@ -17,7 +17,9 @@ window.App = {
 };
 
 function dataUrl(path) {
-  return new URL(path, window.APP_ROOT || document.baseURI).href;
+  const url = new URL(path, window.APP_ROOT || document.baseURI);
+  if (window.APP_VERSION) url.searchParams.set('v', window.APP_VERSION);
+  return url.href;
 }
 
 async function loadJSON(path) {
